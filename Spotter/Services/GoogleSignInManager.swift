@@ -20,8 +20,7 @@ class GoogleSignInManager: ObservableObject {
     // 로그인 중 상태
     @Published var isLoggingIn: Bool = false
     
-    private override init() {
-        super.init()
+    private init() {
         // 저장된 로그인 상태 불러오기
         loadLoginState()
         
@@ -33,7 +32,7 @@ class GoogleSignInManager: ObservableObject {
     
     // 자동 로그인 시도 (앱 시작 시)
     private func restorePreviousSignIn() {
-        GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, error in
+        GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] gidUser, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -42,22 +41,27 @@ class GoogleSignInManager: ObservableObject {
             }
             
             // 사용자 정보 업데이트
-            self.handleSignInResult(user: user)
+            self.handleSignInResult(user: gidUser)
         }
     }
     
-    // 로그인 요청
-    func signIn(presentingViewController: UIViewController, completion: @escaping (Bool, Error?) -> Void) {
+    // 로그인 요청 - UIKit 방식 (직접 호출하지 않음)
+    func signIn(with viewController: UIViewController, completion: @escaping (Bool, Error?) -> Void) {
         isLoggingIn = true
         
         // Google 로그인 설정
-        let signInConfig = GIDConfiguration(clientID: googleClientID)
+        guard let clientID = googleClientID else {
+            completion(false, NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "클라이언트 ID가 없습니다"]))
+            return
+        }
+        
+        let signInConfig = GIDConfiguration(clientID: clientID)
         
         // 로그인 창 표시
         GIDSignIn.sharedInstance.signIn(
             with: signInConfig,
-            presenting: presentingViewController
-        ) { [weak self] user, error in
+            presenting: viewController
+        ) { [weak self] gidUser, error in
             guard let self = self else { return }
             self.isLoggingIn = false
             
@@ -68,23 +72,20 @@ class GoogleSignInManager: ObservableObject {
             }
             
             // 사용자 정보 업데이트
-            self.handleSignInResult(user: user)
+            self.handleSignInResult(user: gidUser)
             completion(true, nil)
         }
     }
     
     // SwiftUI에서 사용하기 위한 로그인 메서드
     func signIn(completion: @escaping (Bool, Error?) -> Void) {
-        guard let rootViewController = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow })?
-            .rootViewController else {
-                completion(false, NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "루트 뷰 컨트롤러를 찾을 수 없습니다."]))
-                return
-            }
-        
-        signIn(presentingViewController: rootViewController, completion: completion)
+        // 루트 뷰 컨트롤러 가져오기 (iOS 15+ 방식)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = scene.windows.first?.rootViewController {
+            signIn(with: rootVC, completion: completion)
+        } else {
+            completion(false, NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "루트 뷰 컨트롤러를 찾을 수 없습니다."]))
+        }
     }
     
     // 로그아웃
@@ -111,7 +112,7 @@ class GoogleSignInManager: ObservableObject {
         
         // 사용자 정보 추출
         if let profile = user.profile {
-            userName = profile.name ?? ""
+            userName = profile.name
             userEmail = profile.email
             userProfilePictureURL = profile.imageURL(withDimension: 100)
         }
@@ -145,13 +146,10 @@ class GoogleSignInManager: ObservableObject {
     
     // MARK: - 설정 값
     
-    // Google 클라이언트 ID - Firebase Console에서 가져온 값으로 변경 필요
-    private var googleClientID: String {
-        // 실제 구현 시 Info.plist에서 값을 가져오거나, 환경 변수로 설정
-        guard let clientID = Bundle.main.object(forInfoDictionaryKey: "GoogleSignInClientID") as? String else {
-            fatalError("GoogleSignInClientID가 Info.plist에 설정되어 있지 않습니다.")
-        }
-        return clientID
+    // Google 클라이언트 ID
+    private var googleClientID: String? {
+        // Info.plist에서 값을 가져오거나, 환경 변수로 설정
+        return Bundle.main.object(forInfoDictionaryKey: "CLIENT_ID") as? String
     }
 }
 
@@ -175,10 +173,11 @@ struct GoogleSignInButton: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                 } else {
-                    Image("google_logo") // 구글 로고 이미지 에셋 필요
+                    Image(systemName: "g.circle")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
+                        .foregroundColor(.blue)
                 }
                 
                 Text("Google로 로그인")
@@ -234,21 +233,11 @@ struct GoogleSignInButtonAlt: View {
     }
 }
 
-// 원래 GoogleSignInSwift 패키지의 GoogleSignInButton을 사용하는 래퍼 뷰
+// GoogleSignInSwift 패키지의 GoogleSignInButton을 사용하는 래퍼 뷰
 struct GoogleSignInSwiftUIButton: View {
     @ObservedObject var signInManager = GoogleSignInManager.shared
     
     var body: some View {
-        // 구글 패키지의 버튼 사용
-        GoogleSignInButton(
-            viewModel: GoogleSignInButtonViewModel(
-                scheme: .light,
-                style: .standard,
-                state: signInManager.isLoggingIn ? .disabled : .normal
-            ),
-            action: {
-                signInManager.signIn { _, _ in }
-            }
-        )
+        GoogleSignInButton()
     }
 }
