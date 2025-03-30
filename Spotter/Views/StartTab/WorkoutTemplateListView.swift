@@ -1,8 +1,8 @@
 //
 //  WorkoutTemplateListView.swift
-//  Spotter
+//  Spotter - 최신 SwiftUI 네비게이션 API 활용
 //
-//  Created by woo on 3/29/25.
+//  Created by woo on 3/31/25.
 //
 
 import SwiftUI
@@ -13,6 +13,7 @@ struct WorkoutTemplateListView: View {
     @State private var viewModel: WorkoutTemplateListViewModel
     @State private var showingAddTemplate = false
     @State private var activeWorkoutSession: WorkoutSession?
+    @State private var selectedTemplate: WorkoutTemplate? = nil
     
     init(modelContext: ModelContext) {
         self._viewModel = State(initialValue: WorkoutTemplateListViewModel(modelContext: modelContext))
@@ -22,9 +23,7 @@ struct WorkoutTemplateListView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.templates) { template in
-                    Button(action: {
-                        viewModel.selectedTemplate = template
-                    }) {
+                    NavigationLink(value: template) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(template.name)
                                 .font(.headline)
@@ -50,6 +49,14 @@ struct WorkoutTemplateListView: View {
                 }
             }
             .navigationTitle("운동 시작")
+            .navigationDestination(for: WorkoutTemplate.self) { template in
+                WorkoutTemplateDetailView(
+                    template: template,
+                    viewModel: viewModel
+                ) { session in
+                    activeWorkoutSession = session
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -64,11 +71,6 @@ struct WorkoutTemplateListView: View {
             }
             .sheet(isPresented: $showingAddTemplate) {
                 WorkoutTemplateEditView(viewModel: viewModel)
-            }
-            .sheet(item: $viewModel.selectedTemplate) { template in
-                WorkoutTemplateDetailView(template: template, viewModel: viewModel) { session in
-                    activeWorkoutSession = session
-                }
             }
             .fullScreenCover(item: $activeWorkoutSession) { session in
                 ActiveWorkoutView(

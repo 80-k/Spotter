@@ -227,7 +227,8 @@ class ActiveWorkoutViewModel {
         }
     }
     
-    // 현재 세션에서 운동 삭제
+    
+    // 운동 삭제 메서드 개선 (진행 중인 세트 처리 로직 추가)
     func deleteExerciseFromWorkout(_ exercise: ExerciseItem) {
         // 현재 활성 운동이면 상태 초기화
         if currentActiveExercise?.id == exercise.id {
@@ -235,6 +236,9 @@ class ActiveWorkoutViewModel {
             currentActiveExercise = nil
             currentActiveSet = nil
             restTimerActive = false
+            
+            // 라이브 액티비티 모드 전환
+            liveActivityManager.switchToWorkoutMode()
         }
         
         // 세션에서 해당 운동의 모든 세트 삭제
@@ -251,6 +255,7 @@ class ActiveWorkoutViewModel {
         
         do {
             try modelContext.save()
+            print("\(exercise.name) 운동이 삭제되었습니다.")
         } catch {
             print("운동 삭제 중 오류 발생: \(error)")
         }
@@ -302,5 +307,65 @@ class ActiveWorkoutViewModel {
     // 앱이 포그라운드로 돌아올 때 호출될 메서드
     func handleAppForegrounded() {
         restTimerManager.handleAppForegrounded()
+    }
+    
+    
+
+    // 동시에 여러 운동을 추가하는 배치 메서드 (선택적으로 추가)
+    func batchAddExercisesToWorkout(_ exercises: [ExerciseItem]) {
+        var addedCount = 0
+        
+        for exercise in exercises {
+            // 이미 존재하지 않는 경우에만 추가
+            if !self.exercises.contains(where: { $0.id == exercise.id }) {
+                // 기존 addExerciseToWorkout 메서드 활용
+                self.exercises.append(exercise)
+                
+                // 기본 세트 3개 추가
+                for _ in 0..<3 {
+                    let _ = currentSession.addSet(for: exercise)
+                }
+                
+                addedCount += 1
+            }
+        }
+        
+        // 변경사항 저장
+        if addedCount > 0 {
+            do {
+                try modelContext.save()
+                print("\(addedCount)개의 운동이 추가되었습니다.")
+            } catch {
+                print("운동 일괄 추가 중 오류 발생: \(error)")
+            }
+        }
+    }
+
+    // 운동 목록 일괄 업데이트 메서드 (선택적으로 추가)
+    func updateExerciseList(with newExercises: [ExerciseItem]) {
+        // 현재 운동과 새 운동 목록의 ID 세트
+        let currentIds = Set(exercises.map { $0.id })
+        let newIds = Set(newExercises.map { $0.id })
+        
+        // 추가할 운동 목록
+        let exercisesToAdd = newExercises.filter { !currentIds.contains($0.id) }
+        
+        // 제거할 운동 목록 (완료된 운동은 제외)
+        let completedIds = Set(completedExercises.map { $0.id })
+        let exercisesToRemove = exercises.filter {
+            !newIds.contains($0.id) && !completedIds.contains($0.id)
+        }
+        
+        // 운동 추가
+        for exercise in exercisesToAdd {
+            addExerciseToWorkout(exercise)
+        }
+        
+        // 운동 제거
+        for exercise in exercisesToRemove {
+            deleteExerciseFromWorkout(exercise)
+        }
+        
+        print("운동 목록 업데이트 완료: \(exercisesToAdd.count)개 추가, \(exercisesToRemove.count)개 제거")
     }
 }

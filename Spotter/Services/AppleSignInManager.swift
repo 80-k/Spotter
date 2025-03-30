@@ -44,7 +44,14 @@ class AppleSignInManager: NSObject, ObservableObject {
         
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController.delegate = self
-        authorizationController.presentationContextProvider = UIApplication.shared.windows.first?.rootViewController as? ASAuthorizationControllerPresentationContextProviding
+        
+        // Fix for deprecated UIApplication.shared.windows property
+        // Using UIWindowScene.windows on a relevant window scene instead
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            authorizationController.presentationContextProvider = rootViewController as? ASAuthorizationControllerPresentationContextProviding
+        }
+        
         authorizationController.performRequests()
     }
     

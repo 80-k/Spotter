@@ -1,6 +1,6 @@
 // ActiveWorkoutView.swift
-// 활성 운동 세션 실행 화면 (앱 상태 관리 개선)
-//  Created by woo on 3/29/25.
+// 활성 운동 세션 메인 화면 - 최신 SwiftUI 네비게이션 API 사용
+// Created by woo on 3/31/25.
 
 import SwiftUI
 import SwiftData
@@ -11,7 +11,7 @@ struct ActiveWorkoutView: View {
     @Environment(\.appState) private var appState
     
     @State private var viewModel: ActiveWorkoutViewModel
-    @State private var showingExerciseSelector = false
+    @State private var navigateToExerciseSelector = false
     @State private var showCompletionAlert = false
     @State private var showCancelAlert = false
     @State private var showingCompletionView = false
@@ -25,7 +25,7 @@ struct ActiveWorkoutView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // 상단 헤더
-                WorkoutHeaderView(
+                ActiveWorkoutHeaderView(
                     elapsedTime: viewModel.elapsedTime,
                     onCancel: { showCancelAlert = true },
                     onComplete: { showCompletionAlert = true }
@@ -33,31 +33,15 @@ struct ActiveWorkoutView: View {
                 
                 // 휴식 타이머 섹션
                 if viewModel.restTimerActive, let activeExercise = viewModel.currentActiveExercise {
-                    ActiveRestTimerSection(
+                    ActiveWorkoutRestTimerView(
                         viewModel: viewModel,
                         activeExercise: activeExercise
                     )
                 }
                 
-                // 모든 운동 리스트를 포함하는 스크롤 뷰
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // 현재 진행 중인 운동 섹션
-                        ActiveExerciseSection(viewModel: viewModel)
-                        
-                        // 대기 중인 운동 목록
-                        WaitingExercisesSection(viewModel: viewModel)
-                        
-                        // 완료된 운동 목록
-                        CompletedExercisesSection(viewModel: viewModel)
-                        
-                        // 운동 추가 버튼
-                        AddExerciseButton(action: {
-                            showingExerciseSelector = true
-                        })
-                        .padding(.horizontal)
-                        .padding(.vertical, 16)
-                    }
+                // 운동 내용 스크롤 뷰
+                WorkoutContentView(viewModel: viewModel) {
+                    navigateToExerciseSelector = true
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -69,133 +53,104 @@ struct ActiveWorkoutView: View {
                     }
                 }
             }
-            .alert("운동 완료", isPresented: $showCompletionAlert) {
-                Button("취소", role: .cancel) { }
-                Button("완료", role: .destructive) {
-                    let success = viewModel.completeWorkout()
-                    if success {
-                        completedSession = viewModel.currentSession
-                        showingCompletionView = true
-                    } else {
-                        dismiss()
-                    }
+            // 최신 네비게이션 API 사용
+            .navigationDestination(isPresented: $navigateToExerciseSelector) {
+                WorkoutSelectionView(
+                    initialSelection: viewModel.exercises
+                ) { selectedExercises in
+                    updateExercisesInWorkout(selectedExercises)
                 }
-            } message: {
-                Text("현재 운동을 완료하시겠습니까?")
             }
-            .alert("운동 취소", isPresented: $showCancelAlert) {
-                Button("아니오", role: .cancel) { }
-                Button("예", role: .destructive) {
-                    LiveActivityManager.shared.endActivity()
+            // 알림창들
+            .applyAlerts(
+                showCompletionAlert: $showCompletionAlert,
+                showCancelAlert: $showCancelAlert,
+                viewModel: viewModel,
+                onWorkoutCompleted: { session in
+                    completedSession = session
+                    showingCompletionView = true
+                },
+                onWorkoutCancelled: {
                     dismiss()
                 }
-            } message: {
-                Text("정말로 운동을 취소하시겠습니까?\n저장되지 않은 운동 기록은 사라집니다.")
-            }
-            .alert("운동 삭제", isPresented: exerciseDeleteBinding) {
-                Button("취소", role: .cancel) {
-                    viewModel.exerciseToDelete = nil
-                }
-                Button("삭제", role: .destructive) {
-                    if let exercise = viewModel.exerciseToDelete {
-                        viewModel.deleteExerciseFromWorkout(exercise)
-                    }
-                    viewModel.exerciseToDelete = nil
-                }
-            } message: {
-                deleteAlertMessage
-            }
-            // 운동 선택 시트
-            .sheet(isPresented: $showingExerciseSelector) {
-                WorkoutExerciseSelectorView(
-                    onExerciseSelected: { exercise in
-                        viewModel.addExerciseToWorkout(exercise)
-                    },
-                    isExerciseSelected: { exercise in
-                        viewModel.exercises.contains(where: { $0.id == exercise.id })
-                    }
-                )
-            }
+            )
+            
             // 운동 완료 시트
             .fullScreenCover(isPresented: $showingCompletionView) {
                 if let session = completedSession {
                     WorkoutCompletionView(session: session)
                 }
             }
+            
+            // 라이프사이클 및 앱 상태 관리
             .onAppear {
                 setupLiveActivity()
-                
-                // 앱 상태 매니저 콜백 설정
-                appState.onBackgrounded = { [weak viewModel] in
-                    viewModel?.handleAppBackgrounded()
-                }
-                
-                appState.onForegrounded = { [weak viewModel] in
-                    viewModel?.handleAppForegrounded()
-                }
+                setupAppStateCallbacks()
             }
             .onDisappear {
-                // 콜백 제거
-                appState.onBackgrounded = nil
-                appState.onForegrounded = nil
+                clearAppStateCallbacks()
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
-                // 앱 상태 매니저를 통해 상태 변경 전파
+            .onChange(of: scenePhase) { _, newPhase in
                 appState.updateScenePhase(newPhase)
             }
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.currentActiveExercise != nil)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.restTimerActive)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.completedExercises.count)
         }
     }
     
-    // 운동 삭제 바인딩
-    private var exerciseDeleteBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel.exerciseToDelete != nil },
-            set: { if !$0 { viewModel.exerciseToDelete = nil } }
-        )
-    }
-    
-    // 삭제 알림 메시지
-    private var deleteAlertMessage: Text {
-        if let exercise = viewModel.exerciseToDelete {
-            return Text("\(exercise.name) 운동을 정말로 삭제하시겠습니까?\n모든 세트 정보가 함께 삭제됩니다.")
-        } else {
-            return Text("")
+    // 선택된 운동을 활성 운동에 업데이트하는 함수
+    private func updateExercisesInWorkout(_ selectedExercises: [ExerciseItem]) {
+        // 현재 활성 운동과 선택된 운동의 ID 세트 생성
+        let currentIds = Set(viewModel.exercises.map { $0.id })
+        let selectedIds = Set(selectedExercises.map { $0.id })
+        
+        // 새로 추가된 운동 처리
+        for exercise in selectedExercises {
+            if !currentIds.contains(exercise.id) {
+                viewModel.addExerciseToWorkout(exercise)
+            }
+        }
+        
+        // 제거된 운동 처리
+        for exercise in viewModel.exercises {
+            if !selectedIds.contains(exercise.id) && !viewModel.completedExercises.contains(where: { $0.id == exercise.id }) {
+                // 완료된 운동은 삭제하지 않음
+                viewModel.deleteExerciseFromWorkout(exercise)
+            }
         }
     }
     
-    // 다이나믹 아일랜드 설정 - 개선된 버전
+    // LiveActivity 설정
     private func setupLiveActivity() {
-        // 이전에 활성화된 LiveActivity가 있을 수 있으므로 초기화
         LiveActivityManager.shared.reset()
         
-        // 다이나믹 아일랜드 활성화
         LiveActivityManager.shared.startActivity(
             workoutName: viewModel.currentSession.template?.name ?? "운동",
             startTime: viewModel.currentSession.startTime
         )
         
-        print("LiveActivity 초기 설정 완료")
-        
-        // 현재 상태에 따라 적절한 모드로 설정
         if viewModel.restTimerActive, let exercise = viewModel.currentActiveExercise {
-            // 초기 상태가 휴식 모드인 경우 (예: 앱 재시작 후)
             LiveActivityManager.shared.updateRestTimer(
                 exerciseName: exercise.name,
                 remainingTime: Int(viewModel.remainingRestTime)
             )
-            print("초기 상태: 휴식 타이머 모드 설정")
         } else {
-            // 초기 상태가 운동 모드인 경우
             LiveActivityManager.shared.switchToWorkoutMode()
-            print("초기 상태: 운동 모드 설정")
+        }
+    }
+    
+    // 앱 상태 콜백 설정
+    private func setupAppStateCallbacks() {
+        appState.onBackgrounded = { [weak viewModel] in
+            viewModel?.handleAppBackgrounded()
         }
         
-        // 추가: 앱 시작 5초 후 현재 상태 로깅 (디버깅용)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            LiveActivityManager.shared.logCurrentState()
+        appState.onForegrounded = { [weak viewModel] in
+            viewModel?.handleAppForegrounded()
         }
+    }
+    
+    // 앱 상태 콜백 제거
+    private func clearAppStateCallbacks() {
+        appState.onBackgrounded = nil
+        appState.onForegrounded = nil
     }
 }
