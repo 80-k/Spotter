@@ -30,102 +30,27 @@ struct ActiveWorkoutView: View {
                     onComplete: { showCompletionAlert = true }
                 )
                 
-                // 휴식 타이머 섹션 - 활성화된 경우에만 표시
+                // 휴식 타이머 섹션
                 if viewModel.restTimerActive, let activeExercise = viewModel.currentActiveExercise {
-                    RestTimerSectionView(
-                        exercise: activeExercise,
-                        remainingTime: viewModel.remainingRestTime,
-                        totalTime: viewModel.currentActiveSet?.restTime ?? 60
+                    ActiveRestTimerSection(
+                        viewModel: viewModel,
+                        activeExercise: activeExercise
                     )
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
                 }
                 
                 // 모든 운동 리스트를 포함하는 스크롤 뷰
                 ScrollView {
                     VStack(spacing: 16) {
-                        // 현재 진행 중인 운동 섹션 - 활성화된 경우에만 표시
-                        if let activeExercise = viewModel.currentActiveExercise {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "figure.strengthtraining.traditional")
-                                        .foregroundColor(.blue)
-                                    Text("현재 진행 중")
-                                        .font(.headline)
-                                        .foregroundColor(.blue)
-                                    
-                                    Spacer()
-                                }
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                                
-                                WorkoutExerciseSection(
-                                    viewModel: viewModel,
-                                    exercise: activeExercise,
-                                    isActive: true
-                                )
-                                .padding(.horizontal)
-                            }
-                            .padding(.bottom, 12)
-                            .background(Color.blue.opacity(0.05))
-                            .cornerRadius(12)
-                            .padding(.horizontal)
-                            .transition(.opacity.combined(with: .scale))
-                        }
+                        // 현재 진행 중인 운동 섹션
+                        ActiveExerciseSection(viewModel: viewModel)
                         
                         // 대기 중인 운동 목록
-                        let waitingExercises = viewModel.exercises.filter { exercise in
-                            viewModel.currentActiveExercise?.id != exercise.id &&
-                            !viewModel.completedExercises.contains { $0.id == exercise.id }
-                        }
-                        
-                        if !waitingExercises.isEmpty {
-                            SectionHeader(
-                                title: "대기 중인 운동",
-                                icon: "hourglass",
-                                color: .orange
-                            )
-                            .padding(.horizontal)
-                            
-                            // 대기 중인 운동 목록
-                            LazyVStack(spacing: 12) {
-                                ForEach(waitingExercises) { exercise in
-                                    WorkoutExerciseSection(
-                                        viewModel: viewModel,
-                                        exercise: exercise,
-                                        isActive: false
-                                    )
-                                    .padding(.horizontal)
-                                    // 섹션 전체를 비활성화하는 대신 세트 완료 버튼만 비활성화
-                                    //.disabled(viewModel.isAnotherExerciseActive(exercise))
-                                    .opacity(viewModel.isAnotherExerciseActive(exercise) ? 0.7 : 1.0)
-                                }
-                            }
-                        }
+                        WaitingExercisesSection(viewModel: viewModel)
                         
                         // 완료된 운동 목록
-                        if !viewModel.completedExercises.isEmpty {
-                            SectionHeader(
-                                title: "완료된 운동",
-                                icon: "checkmark.circle.fill",
-                                color: .green
-                            )
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            
-                            LazyVStack(spacing: 12) {
-                                ForEach(viewModel.completedExercises) { exercise in
-                                    CompletedExerciseSectionView(
-                                        viewModel: viewModel,
-                                        exercise: exercise
-                                    )
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
+                        CompletedExercisesSection(viewModel: viewModel)
                         
-                        // 운동 추가 버튼 (스크롤 뷰 맨 아래에 배치)
+                        // 운동 추가 버튼
                         AddExerciseButton(action: {
                             showingExerciseSelector = true
                         })
@@ -143,7 +68,6 @@ struct ActiveWorkoutView: View {
                     }
                 }
             }
-            // 알림창 처리
             .alert("운동 완료", isPresented: $showCompletionAlert) {
                 Button("취소", role: .cancel) { }
                 Button("완료", role: .destructive) {
@@ -167,10 +91,7 @@ struct ActiveWorkoutView: View {
             } message: {
                 Text("정말로 운동을 취소하시겠습니까?\n저장되지 않은 운동 기록은 사라집니다.")
             }
-            .alert("운동 삭제", isPresented: Binding(
-                get: { viewModel.exerciseToDelete != nil },
-                set: { if !$0 { viewModel.exerciseToDelete = nil } }
-            )) {
+            .alert("운동 삭제", isPresented: exerciseDeleteBinding) {
                 Button("취소", role: .cancel) {
                     viewModel.exerciseToDelete = nil
                 }
@@ -181,11 +102,7 @@ struct ActiveWorkoutView: View {
                     viewModel.exerciseToDelete = nil
                 }
             } message: {
-                if let exercise = viewModel.exerciseToDelete {
-                    Text("\(exercise.name) 운동을 정말로 삭제하시겠습니까?\n모든 세트 정보가 함께 삭제됩니다.")
-                } else {
-                    Text("")
-                }
+                deleteAlertMessage
             }
             // 운동 선택 시트
             .sheet(isPresented: $showingExerciseSelector) {
@@ -205,16 +122,7 @@ struct ActiveWorkoutView: View {
                 }
             }
             .onAppear {
-                // 다이나믹 아일랜드 활성화
-                LiveActivityManager.shared.startActivity(
-                    workoutName: viewModel.currentSession.template?.name ?? "운동",
-                    startTime: viewModel.currentSession.startTime
-                )
-                
-                // 주기적으로 경과 시간 업데이트
-                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                    LiveActivityManager.shared.updateElapsedTime()
-                }
+                setupLiveActivity()
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .background {
@@ -227,6 +135,37 @@ struct ActiveWorkoutView: View {
         }
     }
     
+    // 운동 삭제 바인딩
+    private var exerciseDeleteBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.exerciseToDelete != nil },
+            set: { if !$0 { viewModel.exerciseToDelete = nil } }
+        )
+    }
+    
+    // 삭제 알림 메시지
+    private var deleteAlertMessage: Text {
+        if let exercise = viewModel.exerciseToDelete {
+            return Text("\(exercise.name) 운동을 정말로 삭제하시겠습니까?\n모든 세트 정보가 함께 삭제됩니다.")
+        } else {
+            return Text("")
+        }
+    }
+    
+    // 다이나믹 아일랜드 설정
+    private func setupLiveActivity() {
+        // 다이나믹 아일랜드 활성화
+        LiveActivityManager.shared.startActivity(
+            workoutName: viewModel.currentSession.template?.name ?? "운동",
+            startTime: viewModel.currentSession.startTime
+        )
+        
+        // 주기적으로 경과 시간 업데이트
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            LiveActivityManager.shared.updateElapsedTime()
+        }
+    }
+    
     // 현재 휴식 중인 세트가 있으면 다이나믹 아일랜드 업데이트
     private func updateLiveActivityWithRestingSet() {
         if viewModel.restTimerActive, let exercise = viewModel.currentActiveExercise {
@@ -235,26 +174,5 @@ struct ActiveWorkoutView: View {
                 remainingTime: Int(viewModel.remainingRestTime)
             )
         }
-    }
-}
-
-// 섹션 헤더 컴포넌트
-struct SectionHeader: View {
-    let title: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(color)
-            
-            Text(title)
-                .font(.headline)
-                .foregroundColor(color)
-            
-            Spacer()
-        }
-        .padding(.top, 8)
     }
 }

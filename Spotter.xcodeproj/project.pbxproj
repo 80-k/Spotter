@@ -75,7 +75,6 @@
 			membershipExceptions = (
 				LiveActivityViews.swift,
 				WorkoutLiveActivity.swift,
-				WorkoutWidgets.swift,
 			);
 			target = 95F2E8C02D97F0F600F073E3 /* Spotter */;
 		};

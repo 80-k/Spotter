@@ -1,6 +1,6 @@
 // LiveActivityManager.swift
-// 다이나믹 아일랜드 라이브 액티비티 관리 - iOS 16.2+ 호환 업데이트
-//  Created by woo on 3/29/25.
+// 다이나믹 아일랜드 라이브 액티비티 관리
+// Created by woo on 3/29/25.
 
 import Foundation
 import ActivityKit
@@ -29,10 +29,12 @@ class LiveActivityManager {
         )
         
         do {
-            // 업데이트된 API 사용: content 매개변수 사용
+            // ActivityContent 객체를 명시적으로 생성하여 전달
+            let initialContent = ActivityContent(state: contentState, staleDate: nil)
+            
             currentActivity = try Activity.request(
                 attributes: attributes,
-                content: .init(state: contentState, staleDate: nil),
+                content: initialContent,
                 pushType: nil
             )
             print("운동 라이브 액티비티 시작: \(workoutName)")
@@ -59,8 +61,11 @@ class LiveActivityManager {
             restTimeRemaining: remainingTime
         )
         
+        // ActivityContent 객체를 명시적으로 생성하여 전달
+        let updatedContent = ActivityContent(state: updatedState, staleDate: nil)
+        
         Task {
-            await activity.update(using: updatedState)
+            await activity.update(updatedContent)
         }
     }
     
@@ -80,9 +85,12 @@ class LiveActivityManager {
         )
         
         do {
+            // ActivityContent 객체를 명시적으로 생성하여 전달
+            let initialContent = ActivityContent(state: contentState, staleDate: nil)
+            
             currentActivity = try Activity.request(
                 attributes: attributes,
-                contentState: contentState,
+                content: initialContent,
                 pushType: nil
             )
             print("휴식 타이머 라이브 액티비티 시작: \(exerciseName)")
@@ -103,8 +111,11 @@ class LiveActivityManager {
             restTimeRemaining: activity.content.state.restTimeRemaining
         )
         
+        // ActivityContent 객체를 명시적으로 생성하여 전달
+        let updatedContent = ActivityContent(state: updatedState, staleDate: nil)
+        
         Task {
-            await activity.update(using: updatedState)
+            await activity.update(updatedContent)
         }
     }
     
@@ -120,25 +131,12 @@ class LiveActivityManager {
             restTimeRemaining: 0
         )
         
+        // ActivityContent 객체를 명시적으로 생성하여 전달
+        let finalContent = ActivityContent(state: finalState, staleDate: nil)
+        
         Task {
-            await activity.end(
-                ActivityContent(state: finalState, staleDate: nil),
-                dismissalPolicy: .immediate
-            )
+            await activity.end(finalContent, dismissalPolicy: .immediate)
             currentActivity = nil
         }
     }
-}
-
-// 운동 활동 속성 정의
-struct WorkoutActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var startTime: Date
-        var elapsedTime: TimeInterval
-        var isRestTimer: Bool
-        var restExerciseName: String
-        var restTimeRemaining: Int
-    }
-    
-    var workoutName: String
 }

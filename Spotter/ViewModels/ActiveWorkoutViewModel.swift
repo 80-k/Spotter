@@ -22,6 +22,15 @@ class ActiveWorkoutViewModel {
     // 운동 목록
     var exercises: [ExerciseItem] = []
     
+    // 완료된 운동 목록 속성 추가
+    var completedExercises: [ExerciseItem] {
+        // 모든 세트가 완료된 운동만 완료된 운동으로 간주
+        return exercises.filter { exercise in
+            let sets = getSetsForExercise(exercise)
+            return !sets.isEmpty && sets.allSatisfy { $0.isCompleted }
+        }
+    }
+    
     // 삭제할 운동을 임시 저장하는 변수
     var exerciseToDelete: ExerciseItem? = nil
     
