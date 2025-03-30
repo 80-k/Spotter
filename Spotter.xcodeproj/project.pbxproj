@@ -74,6 +74,13 @@
 			);
 			target = 95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */;
 		};
+		95960E712D998046006B3DBA /* Exceptions for "Spotter" folder in "Spotter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 95F2E8C02D97F0F600F073E3 /* Spotter */;
+		};
 		95C83F262D993B70002BE539 /* Exceptions for "SpotterWidgets" folder in "SpotterWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -104,6 +111,7 @@
 		95F2E8C32D97F0F600F073E3 /* Spotter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				95960E712D998046006B3DBA /* Exceptions for "Spotter" folder in "Spotter" target */,
 				95960E5D2D995FFA006B3DBA /* Exceptions for "Spotter" folder in "SpotterWidgetsExtension" target */,
 			);
 			path = Spotter;
@@ -624,8 +632,7 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Spotter;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_FILE = Spotter/Info.plist;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -657,8 +664,7 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Spotter;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_FILE = Spotter/Info.plist;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

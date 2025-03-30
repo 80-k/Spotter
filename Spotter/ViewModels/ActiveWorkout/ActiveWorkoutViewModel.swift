@@ -1,5 +1,5 @@
 // ActiveWorkoutViewModel.swift
-// 활성 운동 세션 관리 뷰모델
+// 활성 운동 세션 관리 뷰모델 (기본 클래스)
 //  Created by woo on 3/29/25.
 
 import Foundation
@@ -39,7 +39,9 @@ class ActiveWorkoutViewModel {
     var currentActiveSet: WorkoutSet? = nil
     var restTimerActive: Bool = false
     var remainingRestTime: TimeInterval = 0
-    private var restTimer: Timer? = nil
+    
+    // LiveActivity와의 통합을 위한 참조
+    private let liveActivityManager = LiveActivityManager.shared
     
     init(modelContext: ModelContext, session: WorkoutSession) {
         self.modelContext = modelContext
@@ -56,7 +58,7 @@ class ActiveWorkoutViewModel {
     
     deinit {
         timer?.invalidate()
-        restTimer?.invalidate()
+        restTimerManager.stopTimer()
     }
     
     // 타이머 시작
@@ -66,9 +68,11 @@ class ActiveWorkoutViewModel {
             self.elapsedTime = Date().timeIntervalSince(self.currentSession.startTime)
             
             // 라이브 액티비티 주기적 업데이트
-            LiveActivityManager.shared.updateElapsedTime()
+            self.liveActivityManager.updateElapsedTime()
         }
     }
+    
+    // MARK: - 세트 및 운동 관리
     
     // 특정 운동에 대한 세트 목록 가져오기
     func getSetsForExercise(_ exercise: ExerciseItem) -> [WorkoutSet] {
@@ -133,13 +137,13 @@ class ActiveWorkoutViewModel {
             
             // 현재 진행 중 상태 제거
             if currentActiveSet?.id == set.id {
-                stopRestTimer()
+                restTimerManager.stopTimer()
                 currentActiveSet = nil
                 currentActiveExercise = nil
                 restTimerActive = false
                 
                 // 라이브 액티비티 종료
-                LiveActivityManager.shared.updateElapsedTime()
+                liveActivityManager.updateElapsedTime()
             }
         } else {
             // 미완료 상태에서 완료
@@ -149,10 +153,10 @@ class ActiveWorkoutViewModel {
             if let exercise = set.exercise {
                 currentActiveExercise = exercise
                 currentActiveSet = set
-                startRestTimer(for: set)
+                restTimerManager.startTimer(for: set, viewModel: self)
                 
                 // 라이브 액티비티에 휴식 타이머 업데이트
-                LiveActivityManager.shared.updateRestTimer(
+                liveActivityManager.updateRestTimer(
                     exerciseName: exercise.name,
                     remainingTime: Int(set.restTime)
                 )
@@ -170,14 +174,17 @@ class ActiveWorkoutViewModel {
     func completeWorkout() -> Bool {
         currentSession.completeWorkout()
         timer?.invalidate()
-        stopRestTimer()
+        restTimerManager.stopTimer()
         
         // 라이브 액티비티 종료 - 더 명확히 호출
-        LiveActivityManager.shared.endActivity()
+        liveActivityManager.endActivity()
         print("운동 완료: LiveActivity 종료")
         
         do {
-            // 저장 로직은 그대로 유지...
+            try modelContext.save()
+            
+            // 운동 완료 알림 발송
+            NotificationCenter.default.post(name: Notification.Name("WorkoutCompleted"), object: nil)
             
             return true
         } catch {
@@ -224,7 +231,7 @@ class ActiveWorkoutViewModel {
     func deleteExerciseFromWorkout(_ exercise: ExerciseItem) {
         // 현재 활성 운동이면 상태 초기화
         if currentActiveExercise?.id == exercise.id {
-            stopRestTimer()
+            restTimerManager.stopTimer()
             currentActiveExercise = nil
             currentActiveSet = nil
             restTimerActive = false
@@ -249,11 +256,15 @@ class ActiveWorkoutViewModel {
         }
     }
     
+    // MARK: - 통계 및 정보 메서드
+    
+    // 운동의 총 휴식 시간
     func totalRestTimeForExercise(_ exercise: ExerciseItem) -> TimeInterval {
         let sets = getSetsForExercise(exercise)
         return sets.reduce(0) { $0 + $1.restTime }
     }
     
+    // 운동의 총 볼륨 (무게 × 횟수)
     func totalVolumeForExercise(_ exercise: ExerciseItem) -> Double {
         let sets = getSetsForExercise(exercise)
         
@@ -267,81 +278,9 @@ class ActiveWorkoutViewModel {
         
         return totalVolume
     }
-        private func startRestTimer(for set: WorkoutSet) {
-        // 기존 타이머 중지
-        stopRestTimer()
-        
-        // 상태 설정
-        remainingRestTime = set.restTime
-        restTimerActive = true
-        
-        // 현재 활성 상태 설정
-        if let exercise = set.exercise {
-            currentActiveExercise = exercise
-            currentActiveSet = set
-            
-            // LiveActivity 업데이트
-            LiveActivityManager.shared.updateRestTimer(
-                exerciseName: exercise.name,
-                remainingTime: Int(remainingRestTime)
-            )
-            
-            // 디버깅용 로그
-            print("휴식 타이머 시작: \(exercise.name), 시간: \(Int(remainingRestTime))초")
-        }
-        
-        // 타이머 시작
-        restTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            if self.remainingRestTime > 0 {
-                // 시간 감소
-                self.remainingRestTime -= 1
-                
-                // LiveActivity 업데이트 (매 초마다)
-                if let exercise = set.exercise {
-                    // 매 초마다 업데이트
-                    LiveActivityManager.shared.updateRestTimer(
-                        exerciseName: exercise.name,
-                        remainingTime: Int(self.remainingRestTime)
-                    )
-                }
-            } else {
-                // 시간이 다 되면 타이머 상태 종료
-                self.restTimerActive = false
-                
-                // 알림 진동
-                #if os(iOS)
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
-                #endif
-                
-                // LiveActivity 명시적으로 운동 모드로 전환
-                LiveActivityManager.shared.switchToWorkoutMode()
-                
-                // 타이머 중지
-                self.stopRestTimer()
-                
-                print("휴식 타이머 완료: 운동 모드로 전환")
-            }
-        }
-        
-        // 타이머를 메인 스레드에 등록
-        RunLoop.current.add(restTimer!, forMode: .common)
-    }
     
-    // 휴식 타이머 정지 - 수정된 버전
-    private func stopRestTimer() {
-    // 타이머 무효화
-    restTimer?.invalidate()
-    restTimer = nil
-    
-        // 타이머가 사용자에 의해 수동으로 중지된 경우 LiveActivity 모드 전환
-        if restTimerActive && remainingRestTime > 0 {
-            print("휴식 타이머 수동 중지: 운동 모드로 전환")
-            LiveActivityManager.shared.switchToWorkoutMode()
-        }
-    }
+    // 현재 휴식 타이머 관리자
+    let restTimerManager = RestTimerManager()
     
     // 휴식 종료 확인
     func isCurrentlyActive(_ exercise: ExerciseItem) -> Bool {
@@ -353,51 +292,15 @@ class ActiveWorkoutViewModel {
         return currentActiveExercise != nil && currentActiveExercise?.id != exercise.id
     }
     
+    // MARK: - 앱 상태 관리 (스켈레톤 메서드)
+    
     // 앱이 백그라운드로 전환될 때 호출될 메서드
     func handleAppBackgrounded() {
-        // LiveActivity 현재 상태 로깅
-        LiveActivityManager.shared.logCurrentState()
-        
-        // 현재 활성 휴식 타이머가 있는 경우 LiveActivity 업데이트
-        if restTimerActive, let exercise = currentActiveExercise {
-            LiveActivityManager.shared.updateRestTimer(
-                exerciseName: exercise.name,
-                remainingTime: Int(remainingRestTime)
-            )
-            print("백그라운드 전환: 휴식 타이머 상태 업데이트 (\(Int(remainingRestTime))초)")
-        } else {
-            // 일반 운동 시간 업데이트 (명시적으로 운동 모드로 설정)
-            LiveActivityManager.shared.switchToWorkoutMode()
-            print("백그라운드 전환: 운동 모드로 설정")
-        }
+        restTimerManager.handleAppBackgrounded()
     }
-
     
-        // 앱이 포그라운드로 돌아올 때 호출될 메서드 - 개선됨
+    // 앱이 포그라운드로 돌아올 때 호출될 메서드
     func handleAppForegrounded() {
-        // LiveActivity 현재 상태 로깅
-        LiveActivityManager.shared.logCurrentState()
-        
-        if restTimerActive {
-            // 휴식 타이머가 활성화된 상태라면 남은 시간 업데이트
-            if let exercise = currentActiveExercise {
-                LiveActivityManager.shared.updateRestTimer(
-                    exerciseName: exercise.name,
-                    remainingTime: Int(remainingRestTime)
-                )
-                print("포그라운드 복귀: 휴식 타이머 상태 업데이트 (\(Int(remainingRestTime))초)")
-            }
-        } else {
-            // 일반 운동 모드면 명시적으로 운동 모드로 전환
-            LiveActivityManager.shared.switchToWorkoutMode()
-            print("포그라운드 복귀: 운동 모드로 설정")
-        }
+        restTimerManager.handleAppForegrounded()
     }
-    
-    
-    
-
-
-
- 
 }

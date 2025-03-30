@@ -1,5 +1,5 @@
 // ActiveWorkoutView.swift
-// 활성 운동 세션 실행 화면
+// 활성 운동 세션 실행 화면 (앱 상태 관리 개선)
 //  Created by woo on 3/29/25.
 
 import SwiftUI
@@ -8,6 +8,7 @@ import SwiftData
 struct ActiveWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appState) private var appState
     
     @State private var viewModel: ActiveWorkoutViewModel
     @State private var showingExerciseSelector = false
@@ -123,15 +124,24 @@ struct ActiveWorkoutView: View {
             }
             .onAppear {
                 setupLiveActivity()
+                
+                // 앱 상태 매니저 콜백 설정
+                appState.onBackgrounded = { [weak viewModel] in
+                    viewModel?.handleAppBackgrounded()
+                }
+                
+                appState.onForegrounded = { [weak viewModel] in
+                    viewModel?.handleAppForegrounded()
+                }
+            }
+            .onDisappear {
+                // 콜백 제거
+                appState.onBackgrounded = nil
+                appState.onForegrounded = nil
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
-                if newPhase == .background {
-                    // 앱이 백그라운드로 갈 때 LiveActivity 업데이트
-                    viewModel.handleAppBackgrounded()
-                } else if newPhase == .active && oldPhase == .background {
-                    // 앱이 백그라운드에서 활성 상태로 돌아올 때
-                    viewModel.handleAppForegrounded()
-                }
+                // 앱 상태 매니저를 통해 상태 변경 전파
+                appState.updateScenePhase(newPhase)
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.currentActiveExercise != nil)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.restTimerActive)
