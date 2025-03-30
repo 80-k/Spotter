@@ -1,6 +1,6 @@
 //
 //  SpotterApp.swift
-//  Spotter
+//  Spotter - 테마 시스템 통합
 //
 //  Created by woo on 3/29/25.
 //
@@ -9,6 +9,9 @@ import SwiftData
 
 @main
 struct SpotterApp: App {
+    // 테마 관리자
+    @StateObject private var themeManager = ThemeManager.shared
+    
     // 데이터 모델 컨테이너 정의
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -30,6 +33,10 @@ struct SpotterApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                // 테마 설정 적용
+                .preferredColorScheme(themeManager.currentTheme.colorScheme)
+                // 테마 관리자를 환경에 제공
+                .environment(\.themeManager, themeManager)
         }
         .modelContainer(sharedModelContainer)
     }
@@ -52,7 +59,14 @@ struct MainTabView: View {
                 .tabItem {
                     Label("시작", systemImage: "play.circle")
                 }
-//            
+            
+            // 설정 탭 추가
+            SettingsView()
+                .tabItem {
+                    Label("설정", systemImage: "gearshape")
+                }
+            
+//
 //            // 운동 탭
 //            ExerciseListView(modelContext: modelContext)
 //                .tabItem {

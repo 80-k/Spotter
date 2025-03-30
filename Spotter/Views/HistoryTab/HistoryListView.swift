@@ -1,7 +1,6 @@
 //
 //  HistoryListView.swift
-//  운동 기록 목록 화면
-//
+//  운동 기록 목록 화면 - 테마 지원 개선
 //  Created by woo on 3/29/25.
 //
 
@@ -10,6 +9,8 @@ import SwiftData
 
 struct HistoryListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
+    
     @State private var viewModel: HistoryViewModel
     @State private var showingCalendarView = false
     @State private var selectedSession: WorkoutSession?
@@ -66,9 +67,9 @@ struct HistoryListView: View {
                                 }) {
                                     WorkoutSessionRow(session: session)
                                         .padding()
-                                        .background(Color.white)
+                                        .background(cardBackgroundColor)
                                         .cornerRadius(12)
-                                        .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
+                                        .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                                 .contextMenu {
@@ -86,7 +87,13 @@ struct HistoryListView: View {
                 .padding(.bottom, 16)
             }
             .navigationTitle("운동 기록")
-            .background(Color.gray.opacity(0.03))
+            .background(backgroundColor)
+            .toolbar {
+                // 테마 토글 버튼 추가
+                ToolbarItem(placement: .topBarTrailing) {
+                    CompactThemeToggleButton()
+                }
+            }
             .sheet(isPresented: $showingCalendarView) {
                 CalendarView(viewModel: viewModel)
             }
@@ -105,6 +112,36 @@ struct HistoryListView: View {
             .refreshable {
                 viewModel.fetchSessions()
             }
+        }
+    }
+    
+    // 배경색 - 다크 모드 대응
+    private var backgroundColor: Color {
+        switch colorScheme {
+        case .dark:
+            return Color(UIColor.systemBackground)
+        default:
+            return Color.gray.opacity(0.03)
+        }
+    }
+    
+    // 카드 배경색 - 다크 모드 대응
+    private var cardBackgroundColor: Color {
+        switch colorScheme {
+        case .dark:
+            return Color(UIColor.secondarySystemBackground)
+        default:
+            return Color.white
+        }
+    }
+    
+    // 그림자 색상 - 다크 모드 대응
+    private var shadowColor: Color {
+        switch colorScheme {
+        case .dark:
+            return Color.black.opacity(0.1)
+        default:
+            return Color.black.opacity(0.03)
         }
     }
 }

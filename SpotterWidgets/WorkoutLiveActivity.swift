@@ -14,6 +14,8 @@ struct WorkoutLiveActivity: Widget {
         ActivityConfiguration(for: WorkoutActivityAttributes.self) { context in
             // 다이나믹 아일랜드 (컴팩트) 뷰
             LiveActivityCompactView(context: context)
+                .activityBackgroundTint(context.state.isRestTimer ? Color.orange.opacity(0.2) : Color.blue.opacity(0.2))
+                .activitySystemActionForegroundColor(context.state.isRestTimer ? .orange : .blue)
         } dynamicIsland: { context in
             DynamicIsland {
                 // 확장되지 않은 기본 뷰
@@ -30,21 +32,29 @@ struct WorkoutLiveActivity: Widget {
                 }
             } compactLeading: {
                 // 미니 컴팩트 뷰 (왼쪽)
-                HStack {
-                    Image(systemName: "figure.run")
-                    Text(formatTime(context.state.elapsedTime))
-                        .font(.caption2)
-                        .monospacedDigit()
+                if context.state.isRestTimer {
+                    HStack(spacing: 2) {
+                        Image(systemName: "timer")
+                            .foregroundColor(.orange)
+                        Text("\(context.state.restTimeRemaining)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .monospacedDigit()
+                            .foregroundColor(.orange)
+                    }
+                } else {
+                    HStack(spacing: 2) {
+                        Image(systemName: "figure.run")
+                        Text(formatTime(context.state.elapsedTime))
+                            .font(.caption2)
+                            .monospacedDigit()
+                    }
                 }
             } compactTrailing: {
                 // 미니 컴팩트 뷰 (오른쪽)
                 if context.state.isRestTimer {
-                    HStack {
-                        Image(systemName: "timer")
-                        Text("\(context.state.restTimeRemaining)")
-                            .font(.caption2)
-                            .monospacedDigit()
-                    }
+                    Image(systemName: "figure.cooldown")
+                        .foregroundColor(.orange)
                 } else {
                     Image(systemName: "dumbbell.fill")
                 }
@@ -52,10 +62,13 @@ struct WorkoutLiveActivity: Widget {
                 // 최소 뷰
                 if context.state.isRestTimer {
                     Image(systemName: "timer")
+                        .foregroundColor(.orange)
                 } else {
                     Image(systemName: "dumbbell.fill")
                 }
             }
+            .widgetURL(URL(string: "spotter://workout"))
+            .keylineTint(context.state.isRestTimer ? Color.orange : Color.blue)
         }
     }
     

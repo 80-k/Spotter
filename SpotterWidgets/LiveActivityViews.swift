@@ -16,12 +16,14 @@ struct LiveActivityCompactView: View {
                 VStack(alignment: .leading) {
                     Text(context.attributes.workoutName)
                         .font(.headline)
+                        .lineLimit(1)
                     
                     if context.state.isRestTimer {
                         HStack {
                             Image(systemName: "timer")
                             Text("\(context.state.restExerciseName) 휴식")
                                 .font(.caption)
+                                .lineLimit(1)
                         }
                     } else {
                         Text("운동 진행 중")
@@ -32,16 +34,18 @@ struct LiveActivityCompactView: View {
                 Spacer()
                 
                 if context.state.isRestTimer {
+                    // 휴식 타이머 표시
                     VStack {
                         Text("\(context.state.restTimeRemaining)")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .monospacedDigit()
+                            .frame(minWidth: 60, alignment: .trailing) // 넉넉한 공간 확보
                         
                         Text("초")
                             .font(.caption)
                     }
                 } else {
+                    // 운동 시간 표시
                     VStack {
                         Text(formatTime(context.state.elapsedTime))
                             .font(.title)
@@ -93,8 +97,10 @@ struct WorkoutTrailingView: View {
         if context.state.isRestTimer {
             VStack(alignment: .trailing) {
                 Text("\(context.state.restTimeRemaining)")
-                    .font(.headline)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .monospacedDigit()
+                    .frame(minWidth: 48, alignment: .trailing) // 3자리 숫자 공간 확보
+                
                 Text("초")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -125,6 +131,7 @@ struct WorkoutBottomView: View {
             HStack {
                 Label("\(context.state.restExerciseName) 휴식", systemImage: "timer")
                     .font(.caption)
+                    .lineLimit(1)
                 
                 Spacer()
                 

@@ -1,7 +1,7 @@
 //
 //  WorkoutSessionRow.swift
 //  Spotter
-//
+//  다크 모드 지원 개선
 //  Created by woo on 3/29/25.
 //
 
@@ -9,6 +9,8 @@ import SwiftUI
 import SwiftData
 
 struct WorkoutSessionRow: View {
+    @Environment(\.colorScheme) private var colorScheme
+    
     let session: WorkoutSession
     let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -31,8 +33,10 @@ struct WorkoutSessionRow: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.blue.opacity(0.1))
+                        )
                 }
             }
             
@@ -47,6 +51,25 @@ struct WorkoutSessionRow: View {
             }
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(cardBackgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
+    }
+    
+    // 카드 배경색 - 다크 모드 대응
+    private var cardBackgroundColor: Color {
+        switch colorScheme {
+        case .dark:
+            return Color(UIColor.systemGray6)
+        default:
+            return Color.white
+        }
     }
     
     // 세션 지속 시간 포맷팅

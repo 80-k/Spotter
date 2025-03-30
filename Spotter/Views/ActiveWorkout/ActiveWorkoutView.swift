@@ -126,7 +126,11 @@ struct ActiveWorkoutView: View {
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .background {
-                    updateLiveActivityWithRestingSet()
+                    // 앱이 백그라운드로 갈 때 LiveActivity 업데이트
+                    viewModel.handleAppBackgrounded()
+                } else if newPhase == .active && oldPhase == .background {
+                    // 앱이 백그라운드에서 활성 상태로 돌아올 때
+                    viewModel.handleAppForegrounded()
                 }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.currentActiveExercise != nil)
@@ -152,27 +156,36 @@ struct ActiveWorkoutView: View {
         }
     }
     
-    // 다이나믹 아일랜드 설정
+    // 다이나믹 아일랜드 설정 - 개선된 버전
     private func setupLiveActivity() {
+        // 이전에 활성화된 LiveActivity가 있을 수 있으므로 초기화
+        LiveActivityManager.shared.reset()
+        
         // 다이나믹 아일랜드 활성화
         LiveActivityManager.shared.startActivity(
             workoutName: viewModel.currentSession.template?.name ?? "운동",
             startTime: viewModel.currentSession.startTime
         )
         
-        // 주기적으로 경과 시간 업데이트
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            LiveActivityManager.shared.updateElapsedTime()
-        }
-    }
-    
-    // 현재 휴식 중인 세트가 있으면 다이나믹 아일랜드 업데이트
-    private func updateLiveActivityWithRestingSet() {
+        print("LiveActivity 초기 설정 완료")
+        
+        // 현재 상태에 따라 적절한 모드로 설정
         if viewModel.restTimerActive, let exercise = viewModel.currentActiveExercise {
+            // 초기 상태가 휴식 모드인 경우 (예: 앱 재시작 후)
             LiveActivityManager.shared.updateRestTimer(
                 exerciseName: exercise.name,
                 remainingTime: Int(viewModel.remainingRestTime)
             )
+            print("초기 상태: 휴식 타이머 모드 설정")
+        } else {
+            // 초기 상태가 운동 모드인 경우
+            LiveActivityManager.shared.switchToWorkoutMode()
+            print("초기 상태: 운동 모드 설정")
+        }
+        
+        // 추가: 앱 시작 5초 후 현재 상태 로깅 (디버깅용)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            LiveActivityManager.shared.logCurrentState()
         }
     }
 }
