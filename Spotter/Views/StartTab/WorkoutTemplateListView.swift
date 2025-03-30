@@ -1,7 +1,6 @@
 //
 //  WorkoutTemplateListView.swift
-//  Spotter - 최신 SwiftUI 네비게이션 API 활용
-//
+//  수정된 템플릿 목록 화면 - 네비게이션 문제 해결
 //  Created by woo on 3/31/25.
 //
 
@@ -23,7 +22,16 @@ struct WorkoutTemplateListView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.templates) { template in
-                    NavigationLink(value: template) {
+                    NavigationLink {
+                        // 직접 뷰를 구성하는 방식으로 변경
+                        WorkoutTemplateDetailView(
+                            template: template,
+                            viewModel: viewModel
+                        ) { session in
+                            activeWorkoutSession = session
+                        }
+                    } label: {
+                        // 템플릿 행 UI
                         VStack(alignment: .leading, spacing: 8) {
                             Text(template.name)
                                 .font(.headline)
@@ -49,14 +57,6 @@ struct WorkoutTemplateListView: View {
                 }
             }
             .navigationTitle("운동 시작")
-            .navigationDestination(for: WorkoutTemplate.self) { template in
-                WorkoutTemplateDetailView(
-                    template: template,
-                    viewModel: viewModel
-                ) { session in
-                    activeWorkoutSession = session
-                }
-            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
