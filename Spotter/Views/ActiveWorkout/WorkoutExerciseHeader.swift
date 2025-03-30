@@ -13,10 +13,22 @@ struct WorkoutExerciseHeader: View {
     let onRestTimeChange: (TimeInterval) -> Void
     let onDelete: () -> Void
     
+    @State private var showingRestTimeInfo: Bool = false
+    
     var body: some View {
         HStack {
-            Text(exerciseName)
-                .font(.headline)
+            // 운동 이름 표시
+            HStack(spacing: 4) {
+                if exerciseName.isEmpty {
+                    Text("운동")
+                        .font(.headline)
+                        .italic()
+                        .foregroundColor(.secondary)
+                } else {
+                    Text(exerciseName)
+                        .font(.headline)
+                }
+            }
             
             Spacer()
             
@@ -28,6 +40,12 @@ struct WorkoutExerciseHeader: View {
                     Button("60초") { onRestTimeChange(60) }
                     Button("90초") { onRestTimeChange(90) }
                     Button("120초") { onRestTimeChange(120) }
+                    Button("180초") { onRestTimeChange(180) }
+                }
+                
+                // 휴식 시간 정보 표시 버튼
+                Button("휴식 시간 정보") {
+                    showingRestTimeInfo = true
                 }
                 
                 Divider()
@@ -45,5 +63,10 @@ struct WorkoutExerciseHeader: View {
         .padding(.horizontal)
         .padding(.top, 12)
         .padding(.bottom, 8)
+        .alert("휴식 시간이란?", isPresented: $showingRestTimeInfo) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            Text("세트 완료 후 표시되는 타이머의 시간입니다. 모든 세트에 동일하게 적용됩니다. 적절한 휴식은 운동 효과를 높이는 데 중요합니다.")
+        }
     }
 }

@@ -55,6 +55,9 @@ class ActiveWorkoutViewModel {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.elapsedTime = Date().timeIntervalSince(self.currentSession.startTime)
+            
+            // 라이브 액티비티 주기적 업데이트
+            LiveActivityManager.shared.updateElapsedTime()
         }
     }
     
@@ -125,6 +128,9 @@ class ActiveWorkoutViewModel {
                 currentActiveSet = nil
                 currentActiveExercise = nil
                 restTimerActive = false
+                
+                // 라이브 액티비티 종료
+                LiveActivityManager.shared.endActivity()
             }
         } else {
             // 미완료 상태에서 완료
@@ -135,6 +141,12 @@ class ActiveWorkoutViewModel {
                 currentActiveExercise = exercise
                 currentActiveSet = set
                 startRestTimer(for: set)
+                
+                // 라이브 액티비티에 휴식 타이머 업데이트
+                LiveActivityManager.shared.updateRestTimer(
+                    exerciseName: exercise.name,
+                    remainingTime: Int(set.restTime)
+                )
             }
         }
         
@@ -145,7 +157,7 @@ class ActiveWorkoutViewModel {
         }
     }
     
-    // 운동 종료 - 개선된 버전
+    // 운동 종료
     func completeWorkout() -> Bool {
         currentSession.completeWorkout()
         timer?.invalidate()
@@ -244,6 +256,25 @@ class ActiveWorkoutViewModel {
         }
     }
     
+    func totalRestTimeForExercise(_ exercise: ExerciseItem) -> TimeInterval {
+        let sets = getSetsForExercise(exercise)
+        return sets.reduce(0) { $0 + $1.restTime }
+    }
+    
+    func totalVolumeForExercise(_ exercise: ExerciseItem) -> Double {
+        let sets = getSetsForExercise(exercise)
+        
+        // 완료된 세트만 계산
+        let completedSets = sets.filter { $0.isCompleted }
+        
+        // 총 볼륨 계산 (무게 × 반복 횟수)
+        let totalVolume = completedSets.reduce(0) { total, set in
+            total + (set.weight * Double(set.reps))
+        }
+        
+        return totalVolume
+    }
+    
     // 휴식 타이머 시작
     private func startRestTimer(for set: WorkoutSet) {
         stopRestTimer()
@@ -256,6 +287,14 @@ class ActiveWorkoutViewModel {
             
             if self.remainingRestTime > 0 {
                 self.remainingRestTime -= 1
+                
+                // 라이브 액티비티 주기적 업데이트
+                if let exercise = set.exercise {
+                    LiveActivityManager.shared.updateRestTimer(
+                        exerciseName: exercise.name,
+                        remainingTime: Int(self.remainingRestTime)
+                    )
+                }
             } else {
                 // 시간이 종료되면 타이머 숨기기
                 self.restTimerActive = false
@@ -265,6 +304,9 @@ class ActiveWorkoutViewModel {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
                 #endif
+                
+                // 라이브 액티비티 종료
+                LiveActivityManager.shared.endActivity()
                 
                 self.stopRestTimer()
             }

@@ -43,7 +43,7 @@ struct WorkoutExerciseSection: View {
                     onCompleteToggle: {
                         viewModel.toggleSetCompletion(set)
                     },
-                    disableComplete: !isActive && viewModel.isAnotherExerciseActive(exercise)
+                    disableCompleteButton: !isActive && viewModel.isAnotherExerciseActive(exercise)
                 )
                 .padding(.vertical, 2)
             }

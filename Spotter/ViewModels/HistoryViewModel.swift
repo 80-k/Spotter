@@ -23,6 +23,12 @@ class HistoryViewModel {
     // 날짜별 운동 세션 맵
     var sessionsByDate: [Date: [WorkoutSession]] = [:]
     
+    // 통계 정보
+    var totalWorkouts: Int = 0
+    var streakDays: Int = 0
+    var totalDuration: TimeInterval = 0
+    var averageWorkoutTime: TimeInterval = 0
+    
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchSessions()
@@ -48,6 +54,9 @@ class HistoryViewModel {
             
             // 날짜별 세션 정리
             updateSessionsByDate()
+            
+            // 통계 계산
+            calculateStatistics()
         } catch {
             print("세션 목록을 가져오는 중 오류 발생: \(error)")
         }
@@ -76,6 +85,76 @@ class HistoryViewModel {
         for (date, dateSessions) in sessionsByDate {
             print("날짜 \(date): 세션 \(dateSessions.count)개")
         }
+    }
+    
+    // 통계 계산
+    private func calculateStatistics() {
+        // 총 운동 수
+        totalWorkouts = sessions.count
+        
+        // 총 운동 시간
+        totalDuration = sessions.reduce(0) { sum, session in
+            sum + (session.totalDuration ?? 0)
+        }
+        
+        // 평균 운동 시간
+        if totalWorkouts > 0 {
+            averageWorkoutTime = totalDuration / Double(totalWorkouts)
+        } else {
+            averageWorkoutTime = 0
+        }
+        
+        // 연속 운동 일수 계산
+        calculateStreakDays()
+    }
+    
+    // 연속 운동 일수 계산
+    private func calculateStreakDays() {
+        guard !sessionsByDate.isEmpty else {
+            streakDays = 0
+            return
+        }
+        
+        let calendar = Calendar.current
+        
+        // 오늘 날짜 가져오기
+        let today = calendar.startOfDay(for: Date())
+        
+        // 현재 스트릭을 계산하기 위한 날짜 배열
+        var streakDates: [Date] = []
+        
+        // 1. 날짜별로 정렬
+        let sortedDates = sessionsByDate.keys.sorted(by: >)
+        
+        // 가장 최근 운동 날짜
+        guard let lastWorkoutDate = sortedDates.first else {
+            streakDays = 0
+            return
+        }
+        
+        // 오늘 또는 어제 이후에 운동을 하지 않았다면 스트릭이 없음
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        
+        if calendar.compare(lastWorkoutDate, to: yesterday, toGranularity: .day) == .orderedAscending {
+            streakDays = 0
+            return
+        }
+        
+        // 2. 연속 일수 계산
+        var currentDate = lastWorkoutDate
+        
+        while sessionsByDate[currentDate] != nil {
+            streakDates.append(currentDate)
+            
+            // 전날로 이동
+            guard let previousDate = calendar.date(byAdding: .day, value: -1, to: currentDate) else {
+                break
+            }
+            
+            currentDate = previousDate
+        }
+        
+        streakDays = streakDates.count
     }
     
     // 특정 날짜의 세션 목록
