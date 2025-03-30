@@ -39,16 +39,3 @@ struct ExerciseRowView: View {
         .cornerRadius(8)
     }
 }
-
-// 미리보기 제공
-#Preview {
-    ExerciseRowView(
-        exercise: ExerciseItem(
-            name: "벤치 프레스",
-            muscleGroup: "가슴",
-            exerciseDescription: "가슴 운동의 기본"
-        )
-    )
-    .previewLayout(.sizeThatFits)
-    .padding()
-}

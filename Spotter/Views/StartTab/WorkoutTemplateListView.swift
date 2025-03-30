@@ -22,16 +22,9 @@ struct WorkoutTemplateListView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.templates) { template in
-                    NavigationLink {
-                        // 직접 뷰를 구성하는 방식으로 변경
-                        WorkoutTemplateDetailView(
-                            template: template,
-                            viewModel: viewModel
-                        ) { session in
-                            activeWorkoutSession = session
-                        }
+                    Button {
+                        selectedTemplate = template
                     } label: {
-                        // 템플릿 행 UI
                         VStack(alignment: .leading, spacing: 8) {
                             Text(template.name)
                                 .font(.headline)
@@ -48,6 +41,7 @@ struct WorkoutTemplateListView: View {
                         }
                         .padding(.vertical, 4)
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .onDelete { indexSet in
                     for index in indexSet {
@@ -77,6 +71,17 @@ struct WorkoutTemplateListView: View {
                     session: session,
                     modelContext: modelContext
                 )
+            }
+            .sheet(item: $selectedTemplate) { template in
+                NavigationStack {
+                    WorkoutTemplateDetailView(
+                        template: template,
+                        viewModel: viewModel
+                    ) { session in
+                        selectedTemplate = nil
+                        activeWorkoutSession = session
+                    }
+                }
             }
         }
     }

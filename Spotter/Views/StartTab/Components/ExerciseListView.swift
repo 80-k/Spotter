@@ -9,6 +9,7 @@ struct ExerciseListView: View {
     let exercises: [ExerciseItem]
     let onAddExercise: () -> Void
     let onRemoveExercise: (ExerciseItem) -> Void
+    let onExerciseTapped: (ExerciseItem) -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -31,17 +32,23 @@ struct ExerciseListView: View {
                 // 운동 항목 목록
                 LazyVStack(spacing: 8) {
                     ForEach(exercises) { exercise in
-                        ExerciseRowView(exercise: exercise)
-                            .background(Color(.systemBackground))
-                            .cornerRadius(8)
-                            .padding(.horizontal)
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    onRemoveExercise(exercise)
-                                } label: {
-                                    Label("삭제", systemImage: "trash")
-                                }
+                        Button {
+                            onExerciseTapped(exercise)
+                        } label: {
+                            ExerciseRowView(exercise: exercise)
+                                .background(Color(.systemBackground))
+                                .cornerRadius(8)
+                                .padding(.horizontal)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .contentShape(Rectangle())
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                onRemoveExercise(exercise)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
                             }
+                        }
                     }
                 }
                 .padding(.bottom, 8)
