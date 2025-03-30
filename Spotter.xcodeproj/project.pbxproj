@@ -6,7 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		95828FE92D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */; };
+		95828FEA2D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */; };
+		95C83F142D993B6E002BE539 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 95C83F132D993B6E002BE539 /* WidgetKit.framework */; };
+		95C83F162D993B6E002BE539 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 95C83F152D993B6E002BE539 /* SwiftUI.framework */; };
+		95C83F252D993B70002BE539 /* SpotterWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 95C83F112D993B6E002BE539 /* SpotterWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		95C83F232D993B70002BE539 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 95F2E8B92D97F0F600F073E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 95C83F102D993B6E002BE539;
+			remoteInfo = SpotterWidgetsExtension;
+		};
 		95F2E8D22D97F0F700F073E3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 95F2E8B92D97F0F600F073E3 /* Project object */;
@@ -23,13 +38,59 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		95C83F2A2D993B70002BE539 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				95C83F252D993B70002BE539 /* SpotterWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
+		95C83F112D993B6E002BE539 /* SpotterWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SpotterWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		95C83F132D993B6E002BE539 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		95C83F152D993B6E002BE539 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		95F2E8C12D97F0F600F073E3 /* Spotter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spotter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95F2E8D12D97F0F700F073E3 /* SpotterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpotterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		95F2E8DB2D97F0F700F073E3 /* SpotterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpotterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		95C83F262D993B70002BE539 /* Exceptions for "SpotterWidgets" folder in "SpotterWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */;
+		};
+		95C83F2E2D993BBD002BE539 /* Exceptions for "SpotterWidgets" folder in "Spotter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				LiveActivityViews.swift,
+				WorkoutLiveActivity.swift,
+				WorkoutWidgets.swift,
+			);
+			target = 95F2E8C02D97F0F600F073E3 /* Spotter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		95C83F172D993B6E002BE539 /* SpotterWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				95C83F2E2D993BBD002BE539 /* Exceptions for "SpotterWidgets" folder in "Spotter" target */,
+				95C83F262D993B70002BE539 /* Exceptions for "SpotterWidgets" folder in "SpotterWidgetsExtension" target */,
+			);
+			path = SpotterWidgets;
+			sourceTree = "<group>";
+		};
 		95F2E8C32D97F0F600F073E3 /* Spotter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Spotter;
@@ -48,6 +109,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		95C83F0E2D993B6E002BE539 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				95C83F162D993B6E002BE539 /* SwiftUI.framework in Frameworks */,
+				95C83F142D993B6E002BE539 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		95F2E8BE2D97F0F600F073E3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -72,12 +142,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		95828FE42D9941B400CD11B0 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		95C83F122D993B6E002BE539 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				95C83F132D993B6E002BE539 /* WidgetKit.framework */,
+				95C83F152D993B6E002BE539 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		95F2E8B82D97F0F600F073E3 = {
 			isa = PBXGroup;
 			children = (
+				95828FE42D9941B400CD11B0 /* Shared */,
 				95F2E8C32D97F0F600F073E3 /* Spotter */,
 				95F2E8D42D97F0F700F073E3 /* SpotterTests */,
 				95F2E8DE2D97F0F700F073E3 /* SpotterUITests */,
+				95C83F172D993B6E002BE539 /* SpotterWidgets */,
+				95C83F122D993B6E002BE539 /* Frameworks */,
 				95F2E8C22D97F0F600F073E3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +178,7 @@
 				95F2E8C12D97F0F600F073E3 /* Spotter.app */,
 				95F2E8D12D97F0F700F073E3 /* SpotterTests.xctest */,
 				95F2E8DB2D97F0F700F073E3 /* SpotterUITests.xctest */,
+				95C83F112D993B6E002BE539 /* SpotterWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +186,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 95C83F272D993B70002BE539 /* Build configuration list for PBXNativeTarget "SpotterWidgetsExtension" */;
+			buildPhases = (
+				95C83F0D2D993B6E002BE539 /* Sources */,
+				95C83F0E2D993B6E002BE539 /* Frameworks */,
+				95C83F0F2D993B6E002BE539 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				95C83F172D993B6E002BE539 /* SpotterWidgets */,
+			);
+			name = SpotterWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = SpotterWidgetsExtension;
+			productReference = 95C83F112D993B6E002BE539 /* SpotterWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		95F2E8C02D97F0F600F073E3 /* Spotter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 95F2E8E52D97F0F700F073E3 /* Build configuration list for PBXNativeTarget "Spotter" */;
@@ -102,10 +215,12 @@
 				95F2E8BD2D97F0F600F073E3 /* Sources */,
 				95F2E8BE2D97F0F600F073E3 /* Frameworks */,
 				95F2E8BF2D97F0F600F073E3 /* Resources */,
+				95C83F2A2D993B70002BE539 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				95C83F242D993B70002BE539 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				95F2E8C32D97F0F600F073E3 /* Spotter */,
@@ -170,9 +285,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1610;
+				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
+					95C83F102D993B6E002BE539 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					95F2E8C02D97F0F600F073E3 = {
 						CreatedOnToolsVersion = 16.1;
 					};
@@ -203,11 +321,19 @@
 				95F2E8C02D97F0F600F073E3 /* Spotter */,
 				95F2E8D02D97F0F700F073E3 /* SpotterTests */,
 				95F2E8DA2D97F0F700F073E3 /* SpotterUITests */,
+				95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		95C83F0F2D993B6E002BE539 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		95F2E8BF2D97F0F600F073E3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,10 +358,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		95C83F0D2D993B6E002BE539 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				95828FEA2D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		95F2E8BD2D97F0F600F073E3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95828FE92D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +391,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		95C83F242D993B70002BE539 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */;
+			targetProxy = 95C83F232D993B70002BE539 /* PBXContainerItemProxy */;
+		};
 		95F2E8D32D97F0F700F073E3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 95F2E8C02D97F0F600F073E3 /* Spotter */;
@@ -269,6 +409,66 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		95C83F282D993B70002BE539 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QGAWN9852R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpotterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpotterWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = woo.Spotter.SpotterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		95C83F292D993B70002BE539 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QGAWN9852R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpotterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpotterWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = woo.Spotter.SpotterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		95F2E8E32D97F0F700F073E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -399,6 +599,8 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +630,8 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -521,6 +725,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		95C83F272D993B70002BE539 /* Build configuration list for PBXNativeTarget "SpotterWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				95C83F282D993B70002BE539 /* Debug */,
+				95C83F292D993B70002BE539 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		95F2E8BC2D97F0F600F073E3 /* Build configuration list for PBXProject "Spotter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
