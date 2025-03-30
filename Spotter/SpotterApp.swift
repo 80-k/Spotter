@@ -1,16 +1,32 @@
 //
 //  SpotterApp.swift
-//  Spotter - 테마 시스템 통합
+//  Spotter - 테마 시스템 및 온보딩 통합
 //
-//  Created by woo on 3/29/25.
+//  Created by woo on 3/30/25.
 //
 import SwiftUI
 import SwiftData
+import GoogleSignIn
+import FirebaseCore
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(_ application: UIApplication,
+                   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+    FirebaseApp.configure()
+    return true
+  }
+}
 
 @main
 struct SpotterApp: App {
+    // register app delegate for Firebase setup
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
     // 테마 관리자
     @StateObject private var themeManager = ThemeManager.shared
+    
+    // 온보딩 완료 여부 확인
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     // 데이터 모델 컨테이너 정의
     var sharedModelContainer: ModelContainer = {
@@ -32,11 +48,23 @@ struct SpotterApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                // 테마 설정 적용
-                .preferredColorScheme(themeManager.currentTheme.colorScheme)
-                // 테마 관리자를 환경에 제공
-                .environment(\.themeManager, themeManager)
+            ZStack {
+                if hasCompletedOnboarding {
+                    // 메인 앱 화면
+                    MainTabView()
+                        // 테마 설정 적용
+                        .preferredColorScheme(themeManager.currentTheme.colorScheme)
+                        // 테마 관리자를 환경에 제공
+                        .environment(\.themeManager, themeManager)
+                } else {
+                    // 온보딩 화면
+                    OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+                }
+            }
+            .onOpenURL { url in
+                // Google 로그인 콜백 URL 처리
+                GIDSignIn.sharedInstance.handle(url)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
@@ -65,13 +93,6 @@ struct MainTabView: View {
                 .tabItem {
                     Label("설정", systemImage: "gearshape")
                 }
-            
-//
-//            // 운동 탭
-//            ExerciseListView(modelContext: modelContext)
-//                .tabItem {
-//                    Label("운동", systemImage: "dumbbell")
-//                }
         }
     }
 }

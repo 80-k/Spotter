@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		95828FE92D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */; };
 		95828FEA2D9942B600CD11B0 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95828FE82D9942B600CD11B0 /* WorkoutActivityAttributes.swift */; };
+		95960E572D995E74006B3DBA /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 95960E562D995E74006B3DBA /* GoogleSignIn */; };
+		95960E592D995E74006B3DBA /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 95960E582D995E74006B3DBA /* GoogleSignInSwift */; };
+		95960E602D99620F006B3DBA /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 95960E5F2D99620F006B3DBA /* FirebaseAnalytics */; };
+		95960E622D99620F006B3DBA /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 95960E612D99620F006B3DBA /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		95C83F142D993B6E002BE539 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 95C83F132D993B6E002BE539 /* WidgetKit.framework */; };
 		95C83F162D993B6E002BE539 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 95C83F152D993B6E002BE539 /* SwiftUI.framework */; };
 		95C83F252D993B70002BE539 /* SpotterWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 95C83F112D993B6E002BE539 /* SpotterWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -63,6 +67,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		95960E5D2D995FFA006B3DBA /* Exceptions for "Spotter" folder in "SpotterWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"GoogleService-Info.plist",
+			);
+			target = 95C83F102D993B6E002BE539 /* SpotterWidgetsExtension */;
+		};
 		95C83F262D993B70002BE539 /* Exceptions for "SpotterWidgets" folder in "SpotterWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -92,6 +103,9 @@
 		};
 		95F2E8C32D97F0F600F073E3 /* Spotter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				95960E5D2D995FFA006B3DBA /* Exceptions for "Spotter" folder in "SpotterWidgetsExtension" target */,
+			);
 			path = Spotter;
 			sourceTree = "<group>";
 		};
@@ -121,6 +135,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95960E572D995E74006B3DBA /* GoogleSignIn in Frameworks */,
+				95960E592D995E74006B3DBA /* GoogleSignInSwift in Frameworks */,
+				95960E602D99620F006B3DBA /* FirebaseAnalytics in Frameworks */,
+				95960E622D99620F006B3DBA /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -226,6 +244,10 @@
 			);
 			name = Spotter;
 			packageProductDependencies = (
+				95960E562D995E74006B3DBA /* GoogleSignIn */,
+				95960E582D995E74006B3DBA /* GoogleSignInSwift */,
+				95960E5F2D99620F006B3DBA /* FirebaseAnalytics */,
+				95960E612D99620F006B3DBA /* FirebaseAnalyticsWithoutAdIdSupport */,
 			);
 			productName = Spotter;
 			productReference = 95F2E8C12D97F0F600F073E3 /* Spotter.app */;
@@ -312,6 +334,10 @@
 			);
 			mainGroup = 95F2E8B82D97F0F600F073E3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				95960E552D995E74006B3DBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				95960E5E2D99620F006B3DBA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 95F2E8C22D97F0F600F073E3 /* Products */;
 			projectDirPath = "";
@@ -598,6 +624,8 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Spotter;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -609,7 +637,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.01;
 				PRODUCT_BUNDLE_IDENTIFIER = woo.Spotter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -629,6 +657,8 @@
 				DEVELOPMENT_TEAM = QGAWN9852R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Spotter;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -640,7 +670,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.01;
 				PRODUCT_BUNDLE_IDENTIFIER = woo.Spotter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -770,6 +800,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		95960E552D995E74006B3DBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		95960E5E2D99620F006B3DBA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		95960E562D995E74006B3DBA /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 95960E552D995E74006B3DBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		95960E582D995E74006B3DBA /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 95960E552D995E74006B3DBA /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		95960E5F2D99620F006B3DBA /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 95960E5E2D99620F006B3DBA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		95960E612D99620F006B3DBA /* FirebaseAnalyticsWithoutAdIdSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 95960E5E2D99620F006B3DBA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsWithoutAdIdSupport;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 95F2E8B92D97F0F600F073E3 /* Project object */;
 }
