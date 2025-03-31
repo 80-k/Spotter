@@ -74,12 +74,6 @@ final class WorkoutSession {
         return newSet
     }
     
-    // 운동 추가 메서드
-    func addExercise(_ exercise: ExerciseItem) {
-        // 운동을 직접 세션에 넣지 않고, 이 운동에 대한 기본 세트를 추가
-        _ = addSet(for: exercise)
-    }
-    
     // 시간 포맷팅 (예: "1시간 24분 30초")
     private func formatDuration(_ duration: TimeInterval) -> String {
         let hours = Int(duration) / 3600

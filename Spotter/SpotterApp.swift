@@ -6,7 +6,6 @@ import SwiftUI
 import SwiftData
 import GoogleSignIn
 import FirebaseCore
-// Features 폴더의 TemplateListView 사용
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
@@ -32,9 +31,6 @@ struct SpotterApp: App {
     
     // 앱 상태 관리자
     @StateObject private var appStateManager = AppStateManager.shared
-    
-    // 의존성 주입 컨테이너
-    @StateObject private var diContainer = DependencyContainer.shared
     
     // 온보딩 완료 여부 확인
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -76,10 +72,6 @@ struct SpotterApp: App {
                         .environment(\.themeManager, themeManager)
                         // 앱 상태 관리자를 환경에 제공
                         .environment(\.appState, appStateManager)
-                        // DI 컨테이너 환경 제공
-                        .environmentObject(diContainer)
-                        // 이전 방식과의 호환성을 위해 withDependencyContainer도 유지
-                        .withDependencyContainer(diContainer)
                 } else {
                     // 온보딩 화면
                     OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
@@ -89,20 +81,7 @@ struct SpotterApp: App {
             .onChange(of: scenePhase) { _, newPhase in
                 appStateManager.updateScenePhase(newPhase)
             }
-            .task {
-                // 비동기 초기화 작업 (async/await 활용)
-                await setupDependencies()
-            }
         }
-    }
-    
-    // 앱 의존성 비동기 초기화
-    private func setupDependencies() async {
-        // 모델 컨텍스트 초기화
-        let context = ModelContext(sharedModelContainer)
-        diContainer.setupModelContext(context)
-        
-        // 기타 비동기 초기화 작업이 필요하다면 여기에 추가
     }
 }
 
@@ -119,7 +98,7 @@ struct MainTabView: View {
                 }
             
             // 시작 탭
-            TemplateListView(modelContext: modelContext)
+            WorkoutTemplateListView(modelContext: modelContext)
                 .tabItem {
                     Label("시작", systemImage: "play.circle")
                 }
