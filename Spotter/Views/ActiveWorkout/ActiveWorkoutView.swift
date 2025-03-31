@@ -55,7 +55,7 @@ struct ActiveWorkoutView: View {
             }
             // 최신 네비게이션 API 사용
             .navigationDestination(isPresented: $navigateToExerciseSelector) {
-                WorkoutSelectionView(
+                ExerciseSelectionView(
                     initialSelection: viewModel.exercises
                 ) { selectedExercises in
                     updateExercisesInWorkout(selectedExercises)

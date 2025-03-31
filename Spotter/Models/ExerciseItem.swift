@@ -11,14 +11,18 @@ final class ExerciseItem {
     var name: String
     var muscleGroup: String
     var exerciseDescription: String
+    var note: String?
+    var createdAt: Date = Date()
     
     @Relationship(deleteRule: .cascade)
     var workoutTemplates: [WorkoutTemplate]? = []
     
-    init(name: String, muscleGroup: String, exerciseDescription: String = "") {
+    init(name: String, muscleGroup: String, exerciseDescription: String = "", note: String? = nil) {
         self.name = name
         self.muscleGroup = muscleGroup
         self.exerciseDescription = exerciseDescription
+        self.note = note
+        self.createdAt = Date()
     }
 }
 
