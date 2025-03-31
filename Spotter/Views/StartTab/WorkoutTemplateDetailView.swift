@@ -96,10 +96,24 @@ struct WorkoutTemplateDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingEditSheet = true
-                }) {
-                    Label("편집", systemImage: "pencil")
+                Menu {
+                    Button(action: {
+                        showingEditSheet = true
+                    }) {
+                        Label("템플릿 수정", systemImage: "pencil")
+                    }
+                    
+                    Button(role: .destructive, action: {
+                        // 템플릿 삭제 로직
+                        viewModel.deleteTemplate(template)
+                        dismiss()
+                    }) {
+                        Label("템플릿 삭제", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .rotationEffect(.degrees(90))
+                        .padding(8)
                 }
             }
             

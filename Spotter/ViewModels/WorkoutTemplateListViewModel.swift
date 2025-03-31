@@ -56,6 +56,28 @@ class WorkoutTemplateListViewModel {
     
     // 템플릿 삭제
     func deleteTemplate(_ template: WorkoutTemplate) {
+        // 템플릿과 연결된 세션 관계 정리
+        if let sessions = template.sessions {
+            for session in sessions {
+                // 세션과 연결된 세트들 삭제
+                if let sets = session.sets {
+                    for set in sets {
+                        modelContext.delete(set)
+                    }
+                }
+                session.template = nil
+                modelContext.delete(session)
+            }
+        }
+        
+        // 템플릿과 연결된 운동 관계 정리
+        if let exercises = template.exercises {
+            for exercise in exercises {
+                exercise.workoutTemplates?.removeAll(where: { $0.id == template.id })
+            }
+        }
+        
+        // 템플릿 삭제
         modelContext.delete(template)
         
         do {

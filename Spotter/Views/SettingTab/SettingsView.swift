@@ -117,25 +117,6 @@ struct SettingsView: View {
                         themeManager.setTheme(newValue)
                     }
                     
-                    // 현재 테마 정보
-                    HStack {
-                        Label("현재 테마", systemImage: themeManager.currentTheme.icon)
-                            .foregroundColor(themeIconColor(for: themeManager.currentTheme))
-                        
-                        Spacer()
-                        
-                        Text(themeManager.currentTheme.name)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // 테마 토글 버튼
-                    HStack {
-                        Text("테마 전환")
-                        
-                        Spacer()
-                        
-                        ThemeToggleButton()
-                    }
                 }
                 
                 // 동기화 및 백업 섹션 (로그인 시만 표시)

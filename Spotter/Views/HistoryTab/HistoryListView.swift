@@ -14,6 +14,9 @@ struct HistoryListView: View {
     @State private var viewModel: HistoryViewModel
     @State private var showingCalendarView = false
     @State private var selectedSession: WorkoutSession?
+    @State private var activeWorkoutSession: WorkoutSession?
+    @State private var sessionToDelete: WorkoutSession?
+    @State private var showDeleteConfirmation = false
     
     init(modelContext: ModelContext) {
         self._viewModel = State(initialValue: HistoryViewModel(modelContext: modelContext))
@@ -33,9 +36,9 @@ struct HistoryListView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                     
-                    // 최근 기록 헤더
+                    // 전체 세션 헤더
                     HStack {
-                        Text("최근 운동 기록")
+                        Text("전체 세션")
                             .font(.headline)
                         
                         Spacer()
@@ -63,7 +66,13 @@ struct HistoryListView: View {
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.sessions) { session in
                                 Button(action: {
-                                    selectedSession = session
+                                    // 완료된 운동을 터치하면 재활성화
+                                    if let reactivatedSession = viewModel.reactivateSession(session) {
+                                        activeWorkoutSession = reactivatedSession
+                                    } else {
+                                        // 재활성화 실패 시 상세 보기만 표시
+                                        selectedSession = session
+                                    }
                                 }) {
                                     WorkoutSessionRow(session: session)
                                         .padding()
@@ -74,7 +83,9 @@ struct HistoryListView: View {
                                 .buttonStyle(PlainButtonStyle())
                                 .contextMenu {
                                     Button(role: .destructive) {
-                                        viewModel.deleteSession(session)
+                                        // 삭제 확인 대화상자 표시
+                                        sessionToDelete = session
+                                        showDeleteConfirmation = true
                                     } label: {
                                         Label("삭제", systemImage: "trash")
                                     }
@@ -100,10 +111,31 @@ struct HistoryListView: View {
             .sheet(item: $selectedSession) { session in
                 WorkoutSessionDetailView(session: session)
             }
+            .fullScreenCover(item: $activeWorkoutSession) { session in
+                ActiveWorkoutView(
+                    session: session,
+                    modelContext: modelContext
+                )
+            }
             // 운동 완료 알림 수신 시 기록 새로고침
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("WorkoutCompleted"))) { _ in
                 print("운동 완료 알림 수신")
                 viewModel.fetchSessions()
+            }
+            // 삭제 확인 대화상자
+            .confirmationDialog("운동 기록을 삭제하시겠습니까?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+                Button("삭제", role: .destructive) {
+                    if let session = sessionToDelete {
+                        // 삭제 작업 수행
+                        viewModel.deleteSession(session)
+                        sessionToDelete = nil
+                    }
+                }
+                Button("취소", role: .cancel) {
+                    sessionToDelete = nil
+                }
+            } message: {
+                Text("이 작업은 되돌릴 수 없습니다.")
             }
             .onAppear {
                 print("기록 탭 나타남")

@@ -15,21 +15,32 @@ final class WorkoutSet {
     var startRestTime: Date?
     
     // 관계 설정
-    @Relationship
+    @Relationship(inverse: \WorkoutSession.sets)
+    var session: WorkoutSession?
+    
+    // 운동 관계 설정 - 저장되어야 하는 관계
+    @Attribute(.externalStorage)
     var exercise: ExerciseItem?
     
-    init(exercise: ExerciseItem) {
+    init(exercise: ExerciseItem, session: WorkoutSession? = nil) {
         self.exercise = exercise
+        self.session = session
     }
     
-    // 세트 완료 메서드
+    // 세트 완료 메서드 - 무게와 횟수 정보 유지
     func completeSet() {
+        // 무게와 횟수가 0이면 기본값 유지 또는 기본값 설정
+        // 이미 입력된 값이 있다면 그대로 유지
+        // 없다면 0으로 유지
+        
+        // 완료 상태로 변경
         isCompleted = true
         startRestTime = Date()
     }
     
-    // 세트 재개 메서드
+    // 세트 재개 메서드 - 무게와 횟수 정보 유지
     func resumeSet() {
+        // 무게와 횟수 정보는 그대로 유지
         isCompleted = false
         startRestTime = nil
     }

@@ -27,8 +27,22 @@ class ActiveWorkoutViewModel {
         // 모든 세트가 완료된 운동만 완료된 운동으로 간주
         return exercises.filter { exercise in
             let sets = getSetsForExercise(exercise)
-            return !sets.isEmpty && sets.allSatisfy { $0.isCompleted }
+            // 세트가 없으면 완료되지 않은 것으로 간주
+            guard !sets.isEmpty else { return false }
+            // 모든 세트가 완료되어야 완료된 운동으로 간주
+            return sets.allSatisfy { $0.isCompleted }
         }
+    }
+    
+    // 적어도 하나의 세트가 완료되었는지 확인
+    var hasAnyCompletedSet: Bool {
+        return currentSession.sets?.contains(where: { $0.isCompleted }) ?? false
+    }
+    
+    // 모든 세트가 완료되었는지 확인
+    var areAllSetsCompleted: Bool {
+        guard let sets = currentSession.sets, !sets.isEmpty else { return false }
+        return sets.allSatisfy { $0.isCompleted }
     }
     
     // 삭제할 운동을 임시 저장하는 변수
@@ -80,7 +94,8 @@ class ActiveWorkoutViewModel {
     }
     
     // 세트 추가
-    func addSet(for exercise: ExerciseItem) {
+    @discardableResult
+    func addSet(for exercise: ExerciseItem) -> WorkoutSet {
         let newSet = currentSession.addSet(for: exercise)
         
         do {
@@ -88,6 +103,8 @@ class ActiveWorkoutViewModel {
         } catch {
             print("세트 추가 중 오류 발생: \(error)")
         }
+        
+        return newSet
     }
     
     // 세트 업데이트
@@ -119,6 +136,29 @@ class ActiveWorkoutViewModel {
             try modelContext.save()
         } catch {
             print("세트 삭제 중 오류 발생: \(error)")
+        }
+    }
+    
+    // 세트 순서 변경
+    func reorderSets(for exercise: ExerciseItem, from source: IndexSet, to destination: Int) {
+        // 해당 운동의 세트만 가져오기
+        var sets = getSetsForExercise(exercise)
+        
+        // 순서 변경
+        sets.move(fromOffsets: source, toOffset: destination)
+        
+        // 세션의 세트 목록에서 해당 운동의 세트를 모두 제거
+        currentSession.sets?.removeAll(where: { $0.exercise?.id == exercise.id })
+        
+        // 새로운 순서로 세트 추가
+        for set in sets {
+            currentSession.sets?.append(set)
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("세트 순서 변경 중 오류 발생: \(error)")
         }
     }
     
@@ -160,6 +200,9 @@ class ActiveWorkoutViewModel {
                     exerciseName: exercise.name,
                     remainingTime: Int(set.restTime)
                 )
+                
+                // 이 운동의 모든 세트가 완료되었는지 확인
+                checkAndHandleExerciseCompletion(exercise)
             }
         }
         
@@ -170,8 +213,78 @@ class ActiveWorkoutViewModel {
         }
     }
     
+    // 운동의 모든 세트가 완료되었는지 확인하고 자동으로 휴식 타이머 종료
+    private func checkAndHandleExerciseCompletion(_ exercise: ExerciseItem) {
+        let sets = getSetsForExercise(exercise)
+        
+        // 운동의 모든 세트가 완료되었는지 확인
+        if !sets.isEmpty && sets.allSatisfy({ $0.isCompleted }) {
+            // 휴식 타이머가 종료되면 현재 진행 중 상태 초기화
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
+                
+                if self.currentActiveExercise?.id == exercise.id {
+                    self.restTimerManager.stopTimer()
+                    self.currentActiveSet = nil
+                    self.currentActiveExercise = nil
+                    self.restTimerActive = false
+                    
+                    // 라이브 액티비티 업데이트
+                    self.liveActivityManager.updateElapsedTime()
+                }
+            }
+        }
+    }
+    
+    // 완료된 운동을 다시 대기 중으로 이동
+    func reactivateExercise(_ exercise: ExerciseItem) {
+        // 운동에 연결된 모든 세트를 가져옴
+        let sets = getSetsForExercise(exercise)
+        
+        // 마지막 세트의 무게와 횟수 정보 참조
+        var lastWeight: Double = 0.0
+        var lastReps: Int = 0
+        
+        if let lastSet = sets.last, lastSet.weight > 0, lastSet.reps > 0 {
+            lastWeight = lastSet.weight
+            lastReps = lastSet.reps
+        }
+        
+        // 모든 세트를 미완료 상태로 변경 (무게와 횟수 정보 유지)
+        for set in sets {
+            set.resumeSet()
+        }
+        
+        // 새로운 세트 추가 (이전 세트의 무게와 횟수 정보 유지)
+        let newSet = addSet(for: exercise)
+        
+        // 이전 세트의 무게와 횟수 정보가 있다면 적용
+        if lastWeight > 0 && lastReps > 0 {
+            newSet.weight = lastWeight
+            newSet.reps = lastReps
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("운동 재활성화 중 오류 발생: \(error)")
+        }
+    }
+    
     // 운동 종료 시 호출되는 메서드도 수정
     func completeWorkout() -> Bool {
+        // 적어도 하나의 세트가 완료되었는지 확인
+        guard hasAnyCompletedSet else {
+            print("완료된 세트가 없습니다. 운동을 완료할 수 없습니다.")
+            return false
+        }
+        
+        // 완료된 세트만 유지
+        if let sets = currentSession.sets {
+            // 이미 모든 세트가 완료되었기 때문에 필터링은 필요 없지만 안전성을 위해 유지
+            currentSession.sets = sets.filter { $0.isCompleted }
+        }
+        
         currentSession.completeWorkout()
         timer?.invalidate()
         restTimerManager.stopTimer()

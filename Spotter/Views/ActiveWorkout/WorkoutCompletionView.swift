@@ -11,6 +11,7 @@ import SwiftData
 struct WorkoutCompletionView: View {
     let session: WorkoutSession
     @Environment(\.dismiss) private var dismiss
+    var onDismiss: (() -> Void)? = nil
     
     var body: some View {
         NavigationStack {
@@ -25,6 +26,8 @@ struct WorkoutCompletionView: View {
                     // 확인 버튼
                     Button(action: {
                         dismiss()
+                        // 부모 뷰도 함께 닫기
+                        onDismiss?()
                     }) {
                         Text("확인")
                             .font(.headline)
@@ -44,6 +47,8 @@ struct WorkoutCompletionView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("닫기") {
                         dismiss()
+                        // 부모 뷰도 함께 닫기
+                        onDismiss?()
                     }
                 }
             }

@@ -38,56 +38,69 @@ struct CompletedExerciseItemView: View {
     var exercise: ExerciseItem
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                // 운동 이름
-                Text(exercise.name)
-                    .font(.headline)
+        Button(action: {
+            // 완료된 운동을 다시 대기 중으로 이동
+            viewModel.reactivateExercise(exercise)
+        }) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    // 운동 이름
+                    Text(exercise.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    // 완료 아이콘 + 재활성화 안내
+                    HStack(spacing: 4) {
+                        Text("터치하여 재시작")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Image(systemName: "arrow.counterclockwise.circle.fill")
+                            .foregroundColor(.green)
+                    }
+                }
                 
-                Spacer()
-                
-                // 완료 아이콘
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
+                // 세트 정보 및 통계
+                HStack {
+                    // 세트 수
+                    // 이름 변경: InfoLabel → ExerciseInfoLabel
+                    ExerciseInfoLabel(
+                        icon: "number.circle.fill",
+                        label: "\(viewModel.getSetsForExercise(exercise).count) 세트",
+                        color: .blue
+                    )
+                    
+                    Spacer()
+                    
+                    // 휴식 시간
+                    ExerciseInfoLabel(
+                        icon: "timer",
+                        label: formatDuration(viewModel.totalRestTimeForExercise(exercise)),
+                        color: .orange
+                    )
+                    
+                    Spacer()
+                    
+                    // 총 볼륨 (무게 × 횟수)
+                    ExerciseInfoLabel(
+                        icon: "scalemass.fill",
+                        label: String(format: "%.1f kg", viewModel.totalVolumeForExercise(exercise)),
+                        color: .purple
+                    )
+                }
+                .padding(.top, 4)
             }
-            
-            // 세트 정보 및 통계
-            HStack {
-                // 세트 수
-                // 이름 변경: InfoLabel → ExerciseInfoLabel
-                ExerciseInfoLabel(
-                    icon: "number.circle.fill",
-                    label: "\(viewModel.getSetsForExercise(exercise).count) 세트",
-                    color: .blue
-                )
-                
-                Spacer()
-                
-                // 휴식 시간
-                ExerciseInfoLabel(
-                    icon: "timer",
-                    label: formatDuration(viewModel.totalRestTimeForExercise(exercise)),
-                    color: .orange
-                )
-                
-                Spacer()
-                
-                // 총 볼륨 (무게 × 횟수)
-                ExerciseInfoLabel(
-                    icon: "scalemass.fill",
-                    label: String(format: "%.1f kg", viewModel.totalVolumeForExercise(exercise)),
-                    color: .purple
-                )
-            }
-            .padding(.top, 4)
+            .padding()
+            .background(Color.green.opacity(0.05))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
+            )
         }
-        .padding()
-        .background(Color.green.opacity(0.05))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.green.opacity(0.2), lineWidth: 1)
-        )
+        .buttonStyle(PlainButtonStyle())
     }
     
     // 시간 포맷팅

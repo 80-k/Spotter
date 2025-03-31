@@ -92,7 +92,7 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             // 기록 탭
-            HistoryListView(modelContext: modelContext)
+            WorkoutHistoryTabView(modelContext: modelContext)
                 .tabItem {
                     Label("기록", systemImage: "list.bullet.clipboard")
                 }

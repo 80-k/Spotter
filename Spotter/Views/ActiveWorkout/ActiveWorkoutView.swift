@@ -28,7 +28,8 @@ struct ActiveWorkoutView: View {
                 ActiveWorkoutHeaderView(
                     elapsedTime: viewModel.elapsedTime,
                     onCancel: { showCancelAlert = true },
-                    onComplete: { showCompletionAlert = true }
+                    onComplete: { showCompletionAlert = true },
+                    isCompleteEnabled: viewModel.hasAnyCompletedSet
                 )
                 
                 // 휴식 타이머 섹션
@@ -78,7 +79,13 @@ struct ActiveWorkoutView: View {
             // 운동 완료 시트
             .fullScreenCover(isPresented: $showingCompletionView) {
                 if let session = completedSession {
-                    WorkoutCompletionView(session: session)
+                    WorkoutCompletionView(
+                        session: session,
+                        onDismiss: {
+                            // 운동 완료 후 완전히 닫기
+                            dismiss()
+                        }
+                    )
                 }
             }
             

@@ -10,6 +10,7 @@ struct ActiveWorkoutHeaderView: View {
     let elapsedTime: TimeInterval
     let onCancel: () -> Void
     let onComplete: () -> Void
+    let isCompleteEnabled: Bool
     
     var body: some View {
         HStack {
@@ -38,12 +39,39 @@ struct ActiveWorkoutHeaderView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.blue)
+                    .background(isCompleteEnabled ? Color.blue : Color.gray)
                     .cornerRadius(8)
             }
+            .disabled(!isCompleteEnabled)
         }
         .padding()
         .background(Color.secondary.opacity(0.1))
+    }
+}
+
+// 운동 완료 상태 엔음
+// 운동의 세트 완료 상태를 표시하기 위한 엔음
+enum ExerciseCompletionStatus {
+    case notCompleted      // 완료된 세트 없음
+    case partiallyCompleted // 일부 세트만 완료됨
+    case completed         // 모든 세트 완료됨
+    
+    // 아이콘 이름
+    var icon: String {
+        switch self {
+        case .notCompleted: return "circle"
+        case .partiallyCompleted: return "circle.bottomhalf.filled"
+        case .completed: return "checkmark.circle.fill"
+        }
+    }
+    
+    // 아이콘 색상
+    var color: Color {
+        switch self {
+        case .notCompleted: return .gray
+        case .partiallyCompleted: return .orange
+        case .completed: return .green
+        }
     }
 }
 
@@ -51,6 +79,7 @@ struct ActiveWorkoutHeaderView: View {
 // WorkoutExerciseHeader → ActiveExerciseHeaderView 이름 변경
 struct ActiveExerciseHeaderView: View {
     let exerciseName: String
+    var completionStatus: ExerciseCompletionStatus = .notCompleted
     let onRestTimeChange: (TimeInterval) -> Void
     let onDelete: () -> Void
     
@@ -59,7 +88,12 @@ struct ActiveExerciseHeaderView: View {
     var body: some View {
         HStack {
             // 운동 이름 표시
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
+                // 완료 상태 아이콘
+                Image(systemName: completionStatus.icon)
+                    .foregroundColor(completionStatus.color)
+                    .font(.system(size: 16))
+                
                 if exerciseName.isEmpty {
                     Text("운동")
                         .font(.headline)

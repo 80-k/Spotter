@@ -61,12 +61,16 @@ final class WorkoutSession {
     
     // 특정 운동에 대한 세트들 가져오기
     func getSetsForExercise(_ exerciseId: PersistentIdentifier) -> [WorkoutSet] {
-        return sets?.filter { $0.exercise?.id == exerciseId } ?? []
+        guard let allSets = sets else { return [] }
+        return allSets.filter { set in
+            guard let exercise = set.exercise else { return false }
+            return exercise.id == exerciseId
+        }
     }
     
     // 세트 추가 메서드
     func addSet(for exercise: ExerciseItem) -> WorkoutSet {
-        let newSet = WorkoutSet(exercise: exercise)
+        let newSet = WorkoutSet(exercise: exercise, session: self)
         if sets == nil {
             sets = []
         }

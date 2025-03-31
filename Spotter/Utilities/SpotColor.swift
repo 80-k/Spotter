@@ -9,29 +9,42 @@ import SwiftUI
 
 // 앱 전체에서 사용할 색상 팔레트
 struct SpotColor {
-    // 주요 색상
-    static let primary = Color.blue
-    static let secondary = Color.indigo
+    // 주요 색상 - 테마 통일성을 위해 색상 조정
+    static let primary = Color("PrimaryColor", bundle: nil) // 색상 애셋으로 변경
+    static let secondary = Color("SecondaryColor", bundle: nil) // 색상 애셋으로 변경
     
-    // 성공/경고/위험 색상
-    static let success = Color.green
-    static let warning = Color.orange
-    static let danger = Color.red
+    // 성공/경고/위험 색상 - 다크모드에서 가시성 조정
+    static let success = Color("SuccessColor", bundle: nil)
+    static let warning = Color("WarningColor", bundle: nil)
+    static let danger = Color("DangerColor", bundle: nil)
     
     // 배경 색상
     static let background = Color(UIColor.systemBackground)
     static let secondaryBackground = Color(UIColor.secondarySystemBackground)
     static let tertiaryBackground = Color(UIColor.tertiarySystemBackground)
     
-    // 그레이 스케일
-    static let gray1 = Color.gray.opacity(0.1)
-    static let gray2 = Color.gray.opacity(0.2)
-    static let gray3 = Color.gray.opacity(0.3)
+    // 그레이 스케일 - 다크모드 대응 개선
+    static let gray1 = Color(UIColor.systemGray6)
+    static let gray2 = Color(UIColor.systemGray5)
+    static let gray3 = Color(UIColor.systemGray4)
+    static let gray4 = Color(UIColor.systemGray3)
+    static let gray5 = Color(UIColor.systemGray2)
+    static let gray6 = Color(UIColor.systemGray)
     
-    // 기능별 색상
-    static let workoutActive = Color.blue.opacity(0.1)
-    static let restTimer = Color.orange.opacity(0.1)
-    static let completedSet = Color.green.opacity(0.1)
+    // 기능별 색상 - 다크모드 대응 개선
+    static let workoutActive = Color("WorkoutActiveColor", bundle: nil)
+    static let restTimer = Color("RestTimerColor", bundle: nil)
+    static let completedSet = Color("CompletedSetColor", bundle: nil)
+    
+    // 텍스트 색상
+    static let text = Color(UIColor.label)
+    static let secondaryText = Color(UIColor.secondaryLabel)
+    static let tertiaryText = Color(UIColor.tertiaryLabel)
+    
+    // 입력 필드 관련 색상
+    static let inputBackground = Color("InputBackgroundColor", bundle: nil)
+    static let inputBorder = Color("InputBorderColor", bundle: nil)
+    static let inputFocused = Color("InputFocusedColor", bundle: nil)
 }
 
 // 색상 투명도 확장
