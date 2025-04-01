@@ -281,3 +281,319 @@ SwiftData 모델 컨테이너를 관리하는 서비스입니다.
 Spotter 앱은 현대적인 iOS 개발 기술과 패턴을 활용하여 사용자에게 편리하고 효과적인 운동 트래킹 경험을 제공합니다. 클린 아키텍처와 모듈식 설계를 통해 지속적인 개선과, 기능 확장이 용이한 구조를 갖추고 있으며, 특히 LiveActivity와 같은 최신 iOS 기능을 활용하여 차별화된 사용자 경험을 제공합니다.
 
 앞으로도 사용자 피드백을 반영하고 iOS 플랫폼의 발전에 맞춰 지속적으로 개선해 나갈 계획입니다.
+
+## 13. 폴더 구조
+
+프로젝트의 코드 구성은 기능과 아키텍처 계층에 따라 논리적으로 구성되어 있습니다.
+
+```
+Spotter/
+├── App/                    # 앱 진입점 및 초기화
+│   ├── SpotterApp.swift    # 앱 진입점
+│   ├── AppDelegate.swift   # 앱 델리게이트
+│   └── MainTabView.swift   # 메인 탭 네비게이션
+│
+├── Core/                   # 핵심 기능 및 서비스
+│   ├── LiveActivity/       # 실시간 활동 관련 기능
+│   ├── SwiftData/          # SwiftData 관리
+│   ├── AppState/           # 앱 상태 관리
+│   ├── Theme/              # 테마 관리
+│   ├── Timer/              # 타이머 관련 기능
+│   ├── Logging/            # 로그 관리
+│   ├── Auth/               # 인증 관련 기능
+│   └── Extensions/         # 핵심 기능 확장
+│
+├── Domain/                 # 도메인 계층
+│   ├── Models/             # 도메인 모델
+│   │   ├── WorkoutSession.swift
+│   │   ├── WorkoutTemplate.swift
+│   │   ├── WorkoutSet.swift
+│   │   ├── ExerciseItem.swift
+│   │   └── MuscleGroup.swift
+│   ├── UseCases/           # 비즈니스 로직
+│   └── Repositories/       # 데이터 액세스 추상화
+│
+├── Data/                   # 데이터 계층
+│   ├── Repositories/       # 리포지토리 구현
+│   └── DataSources/        # 데이터 소스
+│
+├── Services/               # 앱 서비스
+│   ├── WorkoutService.swift
+│   ├── TimerService.swift
+│   └── NotificationService.swift
+│
+├── Presentation/           # 프레젠테이션 계층
+│   ├── Common/             # 공통 UI 요소
+│   └── Features/           # 기능별 UI 요소
+│
+├── Views/                  # 화면 및 뷰
+│   ├── ActiveWorkout/      # 활성 운동 화면
+│   ├── HistoryTab/         # 운동 기록 화면
+│   ├── WorkoutSelection/   # 운동 선택 화면
+│   ├── StartTab/           # 시작 탭 화면
+│   ├── SettingTab/         # 설정 탭 화면
+│   ├── Onboarding/         # 온보딩 화면
+│   ├── Auth/               # 인증 화면
+│   └── Components/         # 재사용 가능한 컴포넌트
+│
+├── ViewModels/             # 뷰 모델
+│   ├── WorkoutViewModel.swift
+│   ├── HistoryViewModel.swift
+│   └── SettingsViewModel.swift
+│
+├── Utils/                  # 유틸리티 함수
+│   ├── DateUtils.swift
+│   ├── FormatUtils.swift
+│   └── ValidationUtils.swift
+│
+├── Extensions/             # 확장 함수
+│   ├── UIKit+Extensions.swift
+│   ├── SwiftUI+Extensions.swift
+│   └── Foundation+Extensions.swift
+│
+├── Resources/              # 리소스 파일
+│   ├── Fonts/              # 폰트
+│   ├── Localization/       # 현지화 파일
+│   └── JSON/               # JSON 데이터
+│
+└── Assets.xcassets/        # 이미지 및 색상 에셋
+```
+
+## 14. 이름 규칙 및 코드 가이드라인
+
+### 14.1 파일 및 디렉토리 이름
+
+- **파일 이름**: PascalCase 사용 (예: `WorkoutViewModel.swift`)
+- **디렉토리 이름**: PascalCase 사용 (예: `ActiveWorkout/`)
+- **확장 프로토콜 파일**: `[Type]+[Feature].swift` 형식 (예: `View+Theme.swift`)
+
+### 14.2 코드 명명 규칙
+
+- **클래스/구조체/열거형**: PascalCase 사용 (예: `WorkoutSession`)
+- **변수/상수/함수**: camelCase 사용 (예: `startTime`, `calculateTotalWeight()`)
+- **프로토콜**: PascalCase, 주로 명사/형용사 사용 (예: `Identifiable`, `WorkoutManageable`)
+- **타입 별칭**: PascalCase 사용 (예: `typealias WorkoutID = UUID`)
+- **열거형 케이스**: camelCase 사용 (예: `enum ActivityMode { case workoutMode, restTimerMode }`)
+
+### 14.3 SwiftUI 뷰 구성 가이드라인
+
+- 뷰 구조체는 `View` 프로토콜을 준수
+- 복잡한 뷰는 더 작은 컴포넌트로 분리
+- 뷰 확장을 통해 `body` 외 다른 뷰 컴포넌트 정의
+- 뷰 수정자는 가독성을 위해 새 줄에 배치
+
+```swift
+struct WorkoutDetailView: View {
+    // 속성 정의
+    
+    var body: some View {
+        VStack {
+            headerView
+            contentView
+            footerView
+        }
+        .padding()
+        .background(Color.background)
+    }
+}
+
+// 확장을 통한 서브뷰 구성
+extension WorkoutDetailView {
+    private var headerView: some View {
+        // 헤더 뷰 구현
+    }
+    
+    private var contentView: some View {
+        // 컨텐츠 뷰 구현
+    }
+    
+    private var footerView: some View {
+        // 푸터 뷰 구현
+    }
+}
+```
+
+### 14.4 MVVM 패턴 가이드라인
+
+- **모델 (Model)**: 순수 데이터 구조 및 비즈니스 로직
+- **뷰 (View)**: UI 표현만 담당
+- **뷰모델 (ViewModel)**: 상태 관리 및 데이터 변환
+  - `@Published` 속성을 통한 상태 관리
+  - 비즈니스 로직 처리를 위한 서비스 주입
+
+```swift
+final class WorkoutViewModel: ObservableObject {
+    // 상태 정의
+    @Published var workoutSessions: [WorkoutSession] = []
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
+    
+    // 서비스 주입
+    private let workoutService: WorkoutServiceProtocol
+    
+    init(workoutService: WorkoutServiceProtocol) {
+        self.workoutService = workoutService
+    }
+    
+    // 비즈니스 로직 메서드
+    func loadWorkoutSessions() async {
+        // 구현 내용
+    }
+}
+```
+
+### 14.5 SwiftData 사용 가이드라인
+
+- 모델 클래스에 `@Model` 매크로 사용
+- 관계는 `@Relationship` 속성 사용
+- 영구 식별자에 `id` 속성 활용
+- 모델 컨테이너는 `SwiftDataManager`를 통해 중앙 관리
+
+### 14.6 비동기 작업 가이드라인
+
+- `async`/`await` 기반 비동기 함수 활용
+- 장시간 실행 작업에 `Task` 사용
+- UI 업데이트는 메인 스레드에서 수행
+- 비동기 클로저는 `@Sendable` 준수 확인
+
+## 15. 구현된 기능 목록
+
+Spotter 앱에 구현된 주요 기능을 상세히 설명합니다.
+
+### 15.1 사용자 인증 및 프로필
+
+- **계정 관리**
+  - 이메일/소셜 로그인
+  - 사용자 프로필 관리
+  - 비밀번호 재설정
+
+- **온보딩 경험**
+  - 앱 초기 사용 안내
+  - 운동 목표 설정
+  - 사용자 경험 맞춤화
+
+### 15.2 운동 템플릿 관리
+
+- **템플릿 구성**
+  - 새 운동 템플릿 생성
+  - 템플릿 편집 및 복제
+  - 템플릿 삭제 및 정렬
+
+- **운동 항목 라이브러리**
+  - 기본 제공 운동 항목
+  - 사용자 정의 운동 생성
+  - 근육 그룹별 분류 및 필터링
+
+- **템플릿 공유**
+  - 템플릿 내보내기
+  - QR 코드를 통한 공유
+  - 공유 템플릿 가져오기
+
+### 15.3 운동 세션 관리
+
+- **세션 추적**
+  - 세션 시작 및 종료
+  - 실시간 진행 상황 표시
+  - 자동 휴식 타이머
+
+- **세트 관리**
+  - 무게 및 반복 횟수 기록
+  - 세트 완료 상태 추적
+  - 이전 기록 자동 불러오기
+  - 슈퍼세트 지원
+
+- **운동 통계**
+  - 세션 요약 정보
+  - 총 무게 및 볼륨 계산
+  - 운동 시간 및 휴식 시간 분석
+
+### 15.4 실시간 활동 (LiveActivity) 기능
+
+- **운동 모드 LiveActivity**
+  - 현재 운동 정보 표시
+  - 진행 중인 세트 정보
+  - 전체 진행률 표시
+
+- **휴식 타이머 LiveActivity**
+  - 실시간 카운트다운 타이머
+  - 다음 운동 정보 표시
+  - 타이머 완료 알림
+
+- **모드 전환 효과**
+  - 운동 모드 ↔ 휴식 모드 부드러운 전환
+  - 진행 상태에 따른 UI 업데이트
+  - 백그라운드에서도 정확한 타이밍 유지
+
+### 15.5 운동 기록 및 분석
+
+- **히스토리 관리**
+  - 완료된 운동 세션 목록
+  - 날짜별/템플릿별 필터링
+  - 세션 상세 정보 확인
+
+- **데이터 시각화**
+  - 운동 통계 그래프
+  - 기간별 추세 분석
+  - 무게/볼륨 진행 추적
+
+- **데이터 내보내기**
+  - CSV/JSON 형식 내보내기
+  - 건강 앱 연동
+  - 백업 및 복원
+
+### 15.6 테마 및 사용자 설정
+
+- **시각적 테마**
+  - 다크/라이트 모드 지원
+  - 자동 테마 변경
+  - 사용자 정의 색상 설정
+
+- **앱 설정**
+  - 알림 설정
+  - 기본 휴식 시간 설정
+  - 무게 단위 설정 (kg/lb)
+
+- **접근성**
+  - 다이나믹 텍스트 크기 지원
+  - 고대비 모드
+  - 음성 안내 지원
+
+### 15.7 타이머 및 알림
+
+- **내장 타이머**
+  - 세트 간 휴식 타이머
+  - 서킷 타이머
+  - HIIT 타이머
+
+- **알림 시스템**
+  - 휴식 종료 알림
+  - 예정된 운동 리마인더
+  - 운동 목표 달성 축하 알림
+
+- **백그라운드 처리**
+  - 앱 백그라운드 시 타이머 지속
+  - LiveActivity 업데이트
+  - 저전력 작동 모드
+
+## 16. 데이터 흐름 및 상태 관리
+
+### 16.1 데이터 흐름
+
+```
+[사용자 인터랙션] → [뷰] → [뷰모델] → [유스케이스] → [리포지토리] → [데이터 소스]
+      ↑                                                                  ↓
+      └────────────────── [상태 업데이트] ◄───────────────────────────────┘
+```
+
+### 16.2 상태 관리 전략
+
+- **단방향 데이터 흐름**: 예측 가능한 앱 상태 변화
+- **환경 값(EnvironmentObject)**: 앱 전체에서 접근해야 하는 상태
+- **지역화된 상태(@State, @StateObject)**: 단일 뷰 내에서만 사용되는 상태
+- **상태 전파(@Binding, @Published)**: 부모-자식 뷰 간 상태 공유
+
+### 16.3 이벤트 처리
+
+- **NotificationCenter**: 컴포넌트 간 느슨한 결합 통신
+- **Combine 프레임워크**: 반응형 이벤트 스트림 처리
+- **클로저 콜백**: 간단한 이벤트 처리에 활용
