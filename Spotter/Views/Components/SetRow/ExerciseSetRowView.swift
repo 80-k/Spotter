@@ -76,7 +76,8 @@ struct ExerciseSetRowView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     if showKeyboardToolbar {
-                        HStack(spacing: 8) {
+                        // 전체 화면 너비를 사용하는 컨테이너
+                        HStack(spacing: 16) {
                             // 왼쪽에 '비우기' 버튼
                             Button(action: {
                                 // 현재 활성화된 입력창 비우기
@@ -90,13 +91,14 @@ struct ExerciseSetRowView: View {
                             }) {
                                 Text("비우기")
                                     .fontWeight(.medium)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
                                     .foregroundColor(SpotColor.primary)
+                                    // 내부 컨텐츠가 버튼의 전체 영역을 채우도록 함
+                                    .frame(maxWidth: .infinity, minHeight: 40)
                                     .background(Color.gray.opacity(0.1))
                                     .cornerRadius(8)
                             }
-                            .padding(.horizontal, 4)
+                            // 버튼이 컨테이너의 절반 너비를 차지하도록 함
+                            .frame(maxWidth: .infinity)
                             
                             // 오른쪽에 '다음/확인' 버튼
                             Button(action: {
@@ -112,14 +114,17 @@ struct ExerciseSetRowView: View {
                             }) {
                                 Text(isWeightFocused ? "다음" : "확인")
                                     .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
                                     .foregroundColor(.white)
+                                    // 내부 컨텐츠가 버튼의 전체 영역을 채우도록 함
+                                    .frame(maxWidth: .infinity, minHeight: 40)
                                     .background(SpotColor.primary)
                                     .cornerRadius(8)
                             }
-                            .padding(.horizontal, 4)
+                            // 버튼이 컨테이너의 절반 너비를 차지하도록 함
+                            .frame(maxWidth: .infinity)
                         }
+                        // 컨테이너에 좌우 패딩 추가
+                        .padding(.horizontal, 16)
                     }
                 }
             }
