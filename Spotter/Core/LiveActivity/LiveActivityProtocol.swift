@@ -22,6 +22,9 @@ protocol LiveActivityServiceProtocol {
     /// 활동 종료
     func endActivity()
     
+    /// 모든 활동 즉시 종료 (앱 종료 시 호출)
+    func endAllActivities()
+    
     /// 앱이 백그라운드로 전환될 때 처리
     func handleAppBackgroundTransition()
 } 

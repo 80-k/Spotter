@@ -107,7 +107,7 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
     }
     
     // 모든 활동 즉시 종료 (앱 종료 시 호출)
-    private func endAllActivities() {
+    public func endAllActivities() {
         guard let activity = currentActivity else { return }
         
         // 전환 타이머 종료
@@ -204,19 +204,26 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
     
     /// 휴식 타이머 업데이트
     func updateRestTimerActivity(for set: WorkoutSet) {
-        guard let activity = currentActivity else { return }
-        
-        // 운동 모드로 전환 중이면 업데이트 무시
-        if currentMode == .fadeInWorkoutMode {
+        guard let activity = currentActivity else {
+            print("LiveActivityService: 활성 Activity가 없어 휴식 타이머 업데이트 불가")
             return
         }
         
-        // 남은 시간 계산
+        // 운동 모드로 전환 중이면 업데이트 무시
+        if currentMode == .fadeInWorkoutMode {
+            print("LiveActivityService: 운동 모드로 전환 중 - 휴식 타이머 업데이트 무시")
+            return
+        }
+        
+        // 남은 시간 계산 - set 객체에서 직접 가져오기
         let remainingTime = Int(set.remainingRestTime)
+        
+        print("LiveActivityService: 휴식 타이머 업데이트 - 세트 ID: \(set.id), 남은 시간: \(remainingTime)초")
         
         // 동일한 값의 중복 업데이트 방지
         if remainingTime == lastRestTimeValue && 
            (currentMode == .restTimerMode || currentMode == .fadeInRestTimerMode) {
+            print("LiveActivityService: 동일한 시간값 중복 업데이트 방지 - \(remainingTime)초")
             return
         }
         
@@ -226,9 +233,15 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
         // 시간이 0이면 즉시 운동 모드로 전환
         if remainingTime <= 0 {
             if currentMode == .restTimerMode || currentMode == .fadeInRestTimerMode {
+                print("LiveActivityService: 휴식 시간 종료 - 운동 모드로 전환")
                 switchToWorkoutMode()
             }
             return
+        }
+        
+        // 운동 이름 가져오기 (없으면 현재 저장된 값 사용)
+        if let exerciseName = set.exerciseItem?.name, !exerciseName.isEmpty {
+            restExerciseName = exerciseName
         }
         
         // 휴식 타이머 상태로 업데이트
@@ -246,16 +259,21 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
         let capturedRemainingTime = remainingTime
         
         Task {
-            await activityCopy.update(ActivityContent(state: updatedState, staleDate: nil))
-            
-            // 마지막 업데이트 시간 갱신
-            DispatchQueue.main.async { [weak self] in
-                self?.lastRestUpdateTime = Date()
-                if self?.currentMode == .fadeInRestTimerMode {
-                    self?.currentMode = .restTimerMode
+            do {
+                await activityCopy.update(ActivityContent(state: updatedState, staleDate: nil))
+                
+                // 마지막 업데이트 시간 갱신
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.lastRestUpdateTime = Date()
+                    if self.currentMode == .fadeInRestTimerMode {
+                        self.currentMode = .restTimerMode
+                    }
+                    print("LiveActivityService: 휴식 타이머 LiveActivity 업데이트 성공: \(capturedRemainingTime)초")
                 }
+            } catch {
+                print("LiveActivityService: 휴식 타이머 업데이트 오류 - \(error.localizedDescription)")
             }
-            print("휴식 타이머 LiveActivity 업데이트: \(capturedRemainingTime)초")
         }
     }
     
@@ -263,14 +281,20 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
     func switchToWorkoutMode() {
         // 이미 운동 모드면 무시
         if currentMode == .workoutMode {
+            print("LiveActivityService: 이미 운동 모드임 - 전환 무시")
             return
         }
+        
+        print("LiveActivityService: 운동 모드로 전환 시작 - 이전 모드: \(currentMode)")
         
         // 전환 타이머 종료
         invalidateTransitionTimer()
         
         // 전환 모드로 설정
         currentMode = .fadeInWorkoutMode
+        
+        // 휴식 타이머 관련 상태 초기화
+        lastRestTimeValue = -1
         
         // 부드러운 전환을 위한 상태 변경
         applyTransitionToWorkoutMode()
@@ -383,57 +407,50 @@ final class LiveActivityService: LiveActivityServiceProtocol, @unchecked Sendabl
     
     // 운동 모드로의 부드러운 전환 적용
     private func applyTransitionToWorkoutMode() {
-        guard let activity = currentActivity else { return }
+        guard let activity = currentActivity else {
+            print("LiveActivityService: 활성 Activity가 없어 운동 모드 전환 불가")
+            return
+        }
+        
+        print("LiveActivityService: 운동 모드로 전환 적용 시작")
         
         // 첫 번째 상태 업데이트 (전환 시작)
         let transitionState = WorkoutActivityAttributes.ContentState(
             startTime: workoutStartTime,
-            exerciseCount: 0,
-            completedSets: 0,
-            totalSets: 0,
-            isRestMode: false,  // 이제 운동 모드로 전환
+            exerciseCount: lastSessionExerciseCount,  // 저장된 운동 개수 사용
+            completedSets: lastSessionCompletedSets,  // 저장된 완료 세트 사용
+            totalSets: lastSessionTotalSets,          // 저장된 총 세트 사용
+            isRestMode: false,                       // 이제 운동 모드로 전환
             restExerciseName: "",
             remainingRestTime: 0
         )
         
         Task {
-            // 첫 번째 전환 상태 적용
-            await activity.update(ActivityContent(state: transitionState, staleDate: nil))
+            try? await activity.update(ActivityContent(state: transitionState, staleDate: nil))
             
-            // 마지막 업데이트 시간 갱신
+            print("LiveActivityService: 운동 모드 전환 중간 상태 업데이트 완료")
+            
+            // 약간의 시간 후 완전한 운동 모드 적용
+            try? await Task.sleep(for: .seconds(UpdateIntervals.animationDuration))
+            
+            // 완전한 운동 상태
+            let finalWorkoutState = WorkoutActivityAttributes.ContentState(
+                startTime: workoutStartTime,
+                exerciseCount: lastSessionExerciseCount,
+                completedSets: lastSessionCompletedSets,
+                totalSets: lastSessionTotalSets,
+                isRestMode: false,
+                restExerciseName: "",
+                remainingRestTime: 0
+            )
+            
+            try? await activity.update(ActivityContent(state: finalWorkoutState, staleDate: nil))
+            
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                
-                // 약간의 시간 후 완전한 운동 모드 적용
-                DispatchQueue.main.asyncAfter(deadline: .now() + UpdateIntervals.animationDuration) {
-                    self.finalizeWorkoutModeTransition()
-                }
-            }
-        }
-    }
-    
-    // 운동 모드 전환 완료
-    private func finalizeWorkoutModeTransition() {
-        guard let activity = currentActivity, currentMode == .fadeInWorkoutMode else { return }
-        
-        // 완전한 운동 상태
-        let finalWorkoutState = WorkoutActivityAttributes.ContentState(
-            startTime: workoutStartTime,
-            exerciseCount: lastSessionExerciseCount,
-            completedSets: lastSessionCompletedSets,
-            totalSets: lastSessionTotalSets,
-            isRestMode: false,
-            restExerciseName: "",
-            remainingRestTime: 0
-        )
-        
-        Task {
-            await activity.update(ActivityContent(state: finalWorkoutState, staleDate: nil))
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.currentMode = .workoutMode
-                self?.lastWorkoutUpdateTime = Date()
-                print("운동 모드 전환 완료")
+                self.currentMode = .workoutMode
+                self.lastWorkoutUpdateTime = Date()
+                print("LiveActivityService: 운동 모드 전환 완료")
             }
         }
     }

@@ -151,15 +151,21 @@ final class RestTimerService: RestTimerProtocol {
         
         // 표시를 위해 가장 가까운 초로 반올림
         let roundedRemainingTime = ceil(adjustedRemainingTime - 0.25)
+        
+        // 중요: ViewModel과 WorkoutSet 둘 다 업데이트
         viewModel.remainingRestTime = max(0, roundedRemainingTime)
+        set.remainingRestTime = max(0, roundedRemainingTime)
         
         // 초 단위 변경 시에만 LiveActivity 업데이트
         let currentSecond = Int(viewModel.remainingRestTime)
         if currentSecond != lastRestTimeValue {
             lastRestTimeValue = currentSecond
             
-            // LiveActivity 업데이트
+            // LiveActivity 업데이트 - 우선순위 높게 설정하고 직접 set 객체 전달
             Task(priority: .high) {
+                print("RestTimerService: LiveActivity 업데이트 - \(currentSecond)초 남음")
+                // 업데이트 전 set의 값이 정확한지 다시 확인
+                set.remainingRestTime = Double(currentSecond)
                 self.liveActivityService.updateRestTimerActivity(for: set)
             }
         }
@@ -172,7 +178,25 @@ final class RestTimerService: RestTimerProtocol {
     
     /// 타이머 완료 처리
     private func handleTimerCompletion(viewModel: ActiveWorkoutViewModel) {
+        // 타이머 종료 처리
         viewModel.restTimerActive = false
+        
+        // 현재 세트가 있다면 남은 시간을 0으로 설정
+        if let set = _currentActiveSet {
+            // 명시적으로 남은 시간을 0으로 설정
+            set.remainingRestTime = 0
+            viewModel.remainingRestTime = 0
+            
+            // LiveActivity에 최종 업데이트 전송 - 남은 시간 0으로 표시
+            Task(priority: .high) {
+                print("RestTimerService: 타이머 완료 - LiveActivity 최종 업데이트 (0초)")
+                liveActivityService.updateRestTimerActivity(for: set)
+                
+                // 약간의 지연 후 운동 모드로 전환
+                try? await Task.sleep(for: .seconds(0.5))
+                liveActivityService.switchToWorkoutMode()
+            }
+        }
         
         // 진동 피드백
         #if os(iOS)
