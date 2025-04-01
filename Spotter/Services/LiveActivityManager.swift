@@ -188,10 +188,10 @@ class LiveActivityManager {
         }
     }
     
-    // 휴식 타이머 시작 또는 업데이트 - 최적화된 버전
+    // 휴식 타이머 시작 또는 업데이트 - 동기화 문제 해결 버전
     func updateRestTimer(exerciseName: String, remainingTime: Int) {
         // 값이 같으면 중복 업데이트 방지 (0초가 여러번 호출되는 경우)
-        if remainingTime == lastRestTimeValue {
+        if remainingTime == lastRestTimeValue && currentMode == .restTimer {
             return
         }
         
@@ -215,12 +215,11 @@ class LiveActivityManager {
             restExerciseName = exerciseName
         }
         
-        // 업데이트 제한 (너무 빠른 연속 업데이트 방지)
-        // 모드 전환 시에는 더 빠른 업데이트 허용
+        // 업데이트 제한 로직 개선 - 모드 전환 시에는 항상 업데이트
         let now = Date()
         let minInterval = isTransitionToRestMode ? transitionUpdateInterval : regularUpdateInterval
         
-        if now.timeIntervalSince(lastRestUpdateTime) < minInterval && !isTransitionToRestMode {
+        if !isTransitionToRestMode && now.timeIntervalSince(lastRestUpdateTime) < minInterval {
             return  // 모드 전환이 아닌 일반 업데이트는 제한 적용
         }
         
@@ -235,7 +234,7 @@ class LiveActivityManager {
         
         let updatedState = WorkoutActivityAttributes.ContentState(
             startTime: workoutStartTime,
-            elapsedTime: Date().timeIntervalSince(workoutStartTime),
+            elapsedTime: now.timeIntervalSince(workoutStartTime), // 현재 시간 기준으로 정확히 계산
             isRestTimer: true,
             restExerciseName: exerciseName,
             restTimeRemaining: remainingTime
@@ -243,10 +242,17 @@ class LiveActivityManager {
         
         let updatedContent = ActivityContent(state: updatedState, staleDate: nil)
         
-        Task {
-            await activity.update(updatedContent)
-            currentMode = .restTimer
-            lastRestUpdateTime = Date()
+        // 높은 우선순위로 처리하고 오류 처리 추가
+        Task(priority: .high) {
+            do {
+                await activity.update(updatedContent)
+                currentMode = .restTimer
+                lastRestUpdateTime = now // 정확한 시간 기록
+            } catch {
+                print("휴식 타이머 업데이트 중 오류: \(error)")
+                // 다음 업데이트를 허용하기 위해 마지막 업데이트 시간 리셋
+                lastRestUpdateTime = Date().addingTimeInterval(-regularUpdateInterval)
+            }
         }
     }
     
@@ -323,7 +329,7 @@ class LiveActivityManager {
         }
     }
     
-    // 운동 시간 업데이트 - 최적화된 버전
+    // 운동 시간 업데이트 - 타이머 동기화 문제 해결
     func updateElapsedTime() {
         guard let activity = currentActivity else { return }
         
@@ -338,9 +344,12 @@ class LiveActivityManager {
             return
         }
         
+        // 현재 정확한 경과 시간 계산 (운동 시작 시간 기준)
+        let currentElapsedTime = now.timeIntervalSince(workoutStartTime)
+        
         let updatedState = WorkoutActivityAttributes.ContentState(
             startTime: workoutStartTime,
-            elapsedTime: Date().timeIntervalSince(workoutStartTime),
+            elapsedTime: currentElapsedTime,
             isRestTimer: false,
             restExerciseName: "",
             restTimeRemaining: 0
@@ -348,16 +357,24 @@ class LiveActivityManager {
         
         let updatedContent = ActivityContent(state: updatedState, staleDate: nil)
         
-        Task {
-            await activity.update(updatedContent)
-            
-            // 모드 확인 및 설정
-            if currentMode != .workout {
-                currentMode = .workout
-                print("모드 업데이트: 운동 모드")
+        // 높은 우선순위로 업데이트하고 Task 완료 대기를 보장
+        Task(priority: .high) {
+            do {
+                await activity.update(updatedContent)
+                
+                // 모드 확인 및 설정
+                if currentMode != .workout {
+                    currentMode = .workout
+                    print("모드 업데이트: 운동 모드")
+                }
+                
+                // 마지막 업데이트 시간을 현재 시간으로 정확히 설정
+                lastWorkoutUpdateTime = now
+            } catch {
+                print("LiveActivity 업데이트 중 오류: \(error)")
+                // 오류 발생 시 다음 업데이트를 위해 마지막 업데이트 시간 리셋
+                lastWorkoutUpdateTime = Date().addingTimeInterval(-regularUpdateInterval)
             }
-            
-            lastWorkoutUpdateTime = Date()
         }
     }
     

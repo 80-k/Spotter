@@ -89,12 +89,27 @@ class ActiveWorkoutViewModel {
     
     // 타이머 시작
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // 높은 우선순위로 타이머 초기화
+        let timerInterval: TimeInterval = 0.5 // 0.5초 간격으로 업데이트하여 정확도 향상
+        
+        // RunLoop에 추가하여 앱이 활성화된 상태에서 더 정확하게 작동하도록 함
+        timer = Timer(timeInterval: timerInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            self.elapsedTime = Date().timeIntervalSince(self.currentSession.startTime)
             
-            // 라이브 액티비티 주기적 업데이트
-            self.liveActivityManager.updateElapsedTime()
+            // 현재 시간과 시작 시간의 차이로 정확한 경과 시간 계산
+            let now = Date()
+            self.elapsedTime = now.timeIntervalSince(self.currentSession.startTime)
+            
+            // 라이브 액티비티 업데이트 - 1초 간격으로 제한
+            // 0.5초마다 타이머가 트리거되므로 2번에 한 번만 업데이트
+            if Int(self.elapsedTime * 2) % 2 == 0 {
+                self.liveActivityManager.updateElapsedTime()
+            }
+        }
+        
+        // RunLoop에 타이머 추가
+        if let timer = timer {
+            RunLoop.main.add(timer, forMode: .common)
         }
     }
     

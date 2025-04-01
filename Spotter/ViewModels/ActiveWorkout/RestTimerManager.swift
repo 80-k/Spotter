@@ -44,7 +44,7 @@ class RestTimerManager {
             viewModel.remainingRestTime = set.restTime
             viewModel.restTimerActive = true
             
-            // LiveActivity 업데이트
+            // LiveActivity 업데이트 - 초기화 시점에 명확한 값으로 업데이트
             liveActivityManager.updateRestTimer(
                 exerciseName: exercise.name,
                 remainingTime: Int(set.restTime)
@@ -53,7 +53,7 @@ class RestTimerManager {
             print("휴식 타이머 시작: \(exercise.name), 시간: \(Int(set.restTime))초")
         }
         
-        // 4. 타이머 시작 시간 기록
+        // 4. 타이머 시작 시간 정확히 기록 (정밀한 시간 측정을 위해)
         let timerStartTime = Date()
         
         // 5. 타이머 생성 (0.25초 간격으로 더 정확한 업데이트)
@@ -68,22 +68,27 @@ class RestTimerManager {
                 return
             }
             
-            // 실제 경과 시간에 기반한 계산으로 타이머 드리프트 방지
-            let elapsedTime = Date().timeIntervalSince(timerStartTime)
+            // 현재 시간을 정확히 측정하여 경과 시간 계산
+            let now = Date()
+            let elapsedTime = now.timeIntervalSince(timerStartTime)
             let adjustedRemainingTime = max(0, set.restTime - elapsedTime)
             
-            // 표시를 위해 가장 가까운 초로 반올림
+            // 표시를 위해 가장 가까운 초로 반올림 (0.25초 단위로 정확히 보정)
             let roundedRemainingTime = ceil(adjustedRemainingTime - 0.25)
             viewModel.remainingRestTime = max(0, roundedRemainingTime)
             
-            // 초 단위 변경 시에만 LiveActivity 업데이트 (업데이트 빈도 줄이기)
+            // 초 단위 변경 시에만 LiveActivity 업데이트 (업데이트 빈도 조절)
             let currentSecond = Int(viewModel.remainingRestTime)
             if let exercise = set.exercise, currentSecond != self.lastRestTimeValue {
                 self.lastRestTimeValue = currentSecond
-                self.liveActivityManager.updateRestTimer(
-                    exerciseName: exercise.name,
-                    remainingTime: currentSecond
-                )
+                
+                // 높은 우선순위로 LiveActivity 업데이트 실행
+                Task(priority: .high) {
+                    self.liveActivityManager.updateRestTimer(
+                        exerciseName: exercise.name,
+                        remainingTime: currentSecond
+                    )
+                }
             }
             
             // 타이머 완료 시
@@ -96,8 +101,10 @@ class RestTimerManager {
                 generator.notificationOccurred(.success)
                 #endif
                 
-                // LiveActivity 업데이트
-                self.liveActivityManager.switchToWorkoutMode()
+                // LiveActivity 업데이트 - 타이머 종료 처리를 명확히
+                Task(priority: .high) {
+                    self.liveActivityManager.switchToWorkoutMode(immediate: true)
+                }
                 
                 // 타이머 중지
                 self.stopTimer()
