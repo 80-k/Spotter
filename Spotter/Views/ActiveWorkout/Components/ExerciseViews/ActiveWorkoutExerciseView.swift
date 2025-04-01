@@ -15,6 +15,8 @@ struct ActiveWorkoutExerciseView: View {
     
     // 편집 모드 상태 관리
     @State private var isEditMode: Bool = false
+    // 최소화 모드 상태 관리 추가
+    @State private var isMinimized: Bool = false
 
     // Use @State to manage the sets directly
     @State private var sets: [WorkoutSet] = []
@@ -31,25 +33,24 @@ struct ActiveWorkoutExerciseView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 섹션 헤더 - 이름 변경된 컴포넌트 사용
-            HStack {
-                ActiveExerciseHeaderView(
-                    exerciseName: exercise.name,
-                    completionStatus: areAllSetsCompleted ? .completed : areSomeSetsCompleted ? .partiallyCompleted : .notCompleted,
-                    onRestTimeChange: { time in
-                        viewModel.setRestTimeForExercise(exercise, time: time)
-                    },
-                    onDelete: {
-                        viewModel.exerciseToDelete = exercise
-                    },
-                    onMoveUp: onMoveUp,
-                    onMoveDown: onMoveDown,
-                    isEditMode: isEditMode,
-                    onEditModeToggle: {
-                        isEditMode.toggle()
+            // 섹션 헤더 - WorkoutExerciseHeader 컴포넌트 사용으로 변경
+            WorkoutExerciseHeader(
+                exerciseName: exercise.name,
+                onRestTimeChange: { time in
+                    viewModel.setRestTimeForExercise(exercise, time: time)
+                },
+                onDelete: {
+                    viewModel.exerciseToDelete = exercise
+                },
+                onMoveUp: onMoveUp,
+                onMoveDown: onMoveDown,
+                onToggleMinimize: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isMinimized.toggle()
                     }
-                )
-            }
+                },
+                isMinimized: isMinimized
+            )
             .onAppear {
                 loadSets()
             }
@@ -57,36 +58,39 @@ struct ActiveWorkoutExerciseView: View {
                 loadSets()
             }
             
-            // 세트 섹션
-            ExerciseSetSection(
-                sets: sets,
-                isEditMode: isEditMode,
-                areAllSetsCompleted: areAllSetsCompleted,
-                areSomeSetsCompleted: areSomeSetsCompleted
-            )
-            
-            // 세트 목록 - 컴포넌트로 분리됨
-            SetListContainer(
-                sets: $sets,
-                viewModel: viewModel,
-                exercise: exercise,
-                isActive: isActive,
-                isEditMode: isEditMode
-            )
-            
-            // 컨트롤 버튼 섹션
-            ExerciseControlButtonsSection(
-                isEditMode: isEditMode,
-                viewModel: viewModel,
-                exercise: exercise,
-                onEditModeToggle: {
-                    isEditMode.toggle()
-                },
-                onSetsUpdate: {
-                    loadSets()
-                },
-                sets: $sets
-            )
+            // 최소화 상태가 아닐 때만 나머지 콘텐츠 표시
+            if !isMinimized {
+                // 세트 섹션
+                ExerciseSetSection(
+                    sets: sets,
+                    isEditMode: isEditMode,
+                    areAllSetsCompleted: areAllSetsCompleted,
+                    areSomeSetsCompleted: areSomeSetsCompleted
+                )
+                
+                // 세트 목록 - 컴포넌트로 분리됨
+                SetListContainer(
+                    sets: $sets,
+                    viewModel: viewModel,
+                    exercise: exercise,
+                    isActive: isActive,
+                    isEditMode: isEditMode
+                )
+                
+                // 컨트롤 버튼 섹션
+                ExerciseControlButtonsSection(
+                    isEditMode: isEditMode,
+                    viewModel: viewModel,
+                    exercise: exercise,
+                    onEditModeToggle: {
+                        isEditMode.toggle()
+                    },
+                    onSetsUpdate: {
+                        loadSets()
+                    },
+                    sets: $sets
+                )
+            }
         }
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -107,6 +111,19 @@ struct ActiveWorkoutExerciseView: View {
                 )
         )
         .cornerRadius(12)
+        // 최소화 애니메이션 적용
+        .contentShape(Rectangle())
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isMinimized)
+        // 최소화 상태에 따라 높이 조정 - 최소화 상태일 때는 헤더만 표시
+        .frame(height: isMinimized ? 65 : nil)
+        // 탭 제스처 - 최소화 상태일 때 전체 영역 탭으로도 최대화 가능
+        .onTapGesture {
+            if isMinimized {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isMinimized = false
+                }
+            }
+        }
     }
     
     // 세트 로드 함수

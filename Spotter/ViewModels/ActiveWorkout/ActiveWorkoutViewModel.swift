@@ -559,4 +559,48 @@ class ActiveWorkoutViewModel {
     func startRestTimer(for set: WorkoutSet) {
         restTimerService.startTimer(for: set, viewModel: self)
     }
+
+    // MARK: - 프리뷰용 모크 메소드
+    @MainActor
+    static func previewMock() -> ActiveWorkoutViewModel {
+        // 모크 모델 컨텍스트 생성
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: WorkoutTemplate.self, ExerciseItem.self, WorkoutSession.self, WorkoutSet.self, configurations: config)
+        let context = container.mainContext
+        
+        // 모크 데이터 생성
+        let mockExercise1 = ExerciseItem(name: "벤치 프레스", muscleGroup: "가슴")
+        let mockExercise2 = ExerciseItem(name: "스쿼트", muscleGroup: "하체")
+        
+        context.insert(mockExercise1)
+        context.insert(mockExercise2)
+        
+        let mockTemplate = WorkoutTemplate(name: "상체 운동")
+        mockTemplate.exerciseItems = [mockExercise1, mockExercise2]
+        context.insert(mockTemplate)
+        
+        let mockSession = WorkoutSession(workoutTemplate: mockTemplate)
+        context.insert(mockSession)
+        
+        // 세트 추가
+        let set1 = WorkoutSet(exerciseItem: mockExercise1)
+        set1.weight = 60
+        set1.reps = 10
+        set1.order = 1
+        context.insert(set1)
+        
+        let set2 = WorkoutSet(exerciseItem: mockExercise1)
+        set2.weight = 70
+        set2.reps = 8
+        set2.order = 2
+        context.insert(set2)
+        
+        mockSession.workoutSets = [set1, set2]
+        
+        try! context.save()
+        
+        // 뷰모델 생성 및 반환
+        let viewModel = ActiveWorkoutViewModel(modelContext: context, session: mockSession)
+        return viewModel
+    }
 }

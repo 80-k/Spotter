@@ -14,6 +14,8 @@ struct WorkoutExerciseHeader: View {
     let onDelete: () -> Void
     var onMoveUp: (() -> Void)? = nil
     var onMoveDown: (() -> Void)? = nil
+    var onToggleMinimize: (() -> Void)? = nil
+    let isMinimized: Bool
     
     @State private var showingRestTimeInfo: Bool = false
     
@@ -29,6 +31,19 @@ struct WorkoutExerciseHeader: View {
                 } else {
                     Text(exerciseName)
                         .font(.headline)
+                        .foregroundColor(isMinimized ? .secondary : .primary)
+                }
+                
+                // 최소화 상태 표시 아이콘 추가
+                Image(systemName: isMinimized ? "chevron.down" : "chevron.up")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .opacity(0.7)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    onToggleMinimize?()
                 }
             }
             
@@ -36,6 +51,17 @@ struct WorkoutExerciseHeader: View {
             
             // 컨텍스트 메뉴 버튼 추가
             Menu {
+                // 최소화/최대화 토글 메뉴 추가
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        onToggleMinimize?()
+                    }
+                }) {
+                    Label(isMinimized ? "펼치기" : "접기", systemImage: isMinimized ? "chevron.down" : "chevron.up")
+                }
+                
+                Divider()
+                
                 // 순서 변경 메뉴 추가
                 if onMoveUp != nil || onMoveDown != nil {
                     Menu("순서 변경") {
@@ -89,5 +115,39 @@ struct WorkoutExerciseHeader: View {
         } message: {
             Text("세트 완료 후 표시되는 타이머의 시간입니다. 모든 세트에 동일하게 적용됩니다. 적절한 휴식은 운동 효과를 높이는 데 중요합니다.")
         }
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.clear)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        onToggleMinimize?()
+                    }
+                }
+        )
     }
+}
+
+// SwiftUI 프리뷰
+#Preview {
+    VStack {
+        WorkoutExerciseHeader(
+            exerciseName: "벤치 프레스",
+            onRestTimeChange: { _ in },
+            onDelete: {},
+            onMoveUp: {},
+            onMoveDown: {},
+            onToggleMinimize: {},
+            isMinimized: false
+        )
+        
+        WorkoutExerciseHeader(
+            exerciseName: "스쿼트",
+            onRestTimeChange: { _ in },
+            onDelete: {},
+            onToggleMinimize: {},
+            isMinimized: true
+        )
+    }
+    .padding()
 }
