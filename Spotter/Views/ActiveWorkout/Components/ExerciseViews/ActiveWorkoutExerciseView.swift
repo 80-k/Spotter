@@ -5,130 +5,19 @@
 import SwiftUI
 import SwiftData
 
-// 운동 뷰 컴포넌트
-struct ActiveWorkoutExerciseView: View {
-    var viewModel: ActiveWorkoutViewModel
-    let exercise: ExerciseItem
-    var isActive: Bool
-    var onMoveUp: (() -> Void)? = nil
-    var onMoveDown: (() -> Void)? = nil
+// MARK: - 이 클래스는 ExerciseSetManager.swift로 이동되었습니다
+/*
+class ExerciseSetManager {
+    private let viewModel: ActiveWorkoutViewModel
+    private let exercise: ExerciseItem
     
-    // 편집 모드 상태 관리
-    @State private var isEditMode: Bool = false
-    // 최소화 모드 상태 관리 추가
-    @State private var isMinimized: Bool = false
-
-    // Use @State to manage the sets directly
-    @State private var sets: [WorkoutSet] = []
-    
-    // 모든 세트가 완료되었는지 확인
-    private var areAllSetsCompleted: Bool {
-        !sets.isEmpty && sets.allSatisfy { $0.isCompleted }
+    init(viewModel: ActiveWorkoutViewModel, exercise: ExerciseItem) {
+        self.viewModel = viewModel
+        self.exercise = exercise
     }
     
-    // 일부 세트만 완료되었는지 확인
-    private var areSomeSetsCompleted: Bool {
-        sets.contains(where: { $0.isCompleted }) && !areAllSetsCompleted
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // 섹션 헤더 - WorkoutExerciseHeader 컴포넌트 사용으로 변경
-            WorkoutExerciseHeader(
-                exerciseName: exercise.name,
-                onRestTimeChange: { time in
-                    viewModel.setRestTimeForExercise(exercise, time: time)
-                },
-                onDelete: {
-                    viewModel.exerciseToDelete = exercise
-                },
-                onMoveUp: onMoveUp,
-                onMoveDown: onMoveDown,
-                onToggleMinimize: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isMinimized.toggle()
-                    }
-                },
-                isMinimized: isMinimized
-            )
-            .onAppear {
-                loadSets()
-            }
-            .onChange(of: exercise.id) { _, _ in
-                loadSets()
-            }
-            
-            // 최소화 상태가 아닐 때만 나머지 콘텐츠 표시
-            if !isMinimized {
-                // 세트 섹션
-                ExerciseSetSection(
-                    sets: sets,
-                    isEditMode: isEditMode,
-                    areAllSetsCompleted: areAllSetsCompleted,
-                    areSomeSetsCompleted: areSomeSetsCompleted
-                )
-                
-                // 세트 목록 - 컴포넌트로 분리됨
-                SetListContainer(
-                    sets: $sets,
-                    viewModel: viewModel,
-                    exercise: exercise,
-                    isActive: isActive,
-                    isEditMode: isEditMode
-                )
-                
-                // 컨트롤 버튼 섹션
-                ExerciseControlButtonsSection(
-                    isEditMode: isEditMode,
-                    viewModel: viewModel,
-                    exercise: exercise,
-                    onEditModeToggle: {
-                        isEditMode.toggle()
-                    },
-                    onSetsUpdate: {
-                        loadSets()
-                    },
-                    sets: $sets
-                )
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(areAllSetsCompleted ? SpotColor.success.opacity(0.08) :
-                      isActive ? SpotColor.primary.opacity(0.08) :
-                      areSomeSetsCompleted ? SpotColor.warning.opacity(0.08) :
-                      Color(.tertiarySystemGroupedBackground))
-        )
-        // 테두리는 필요한 경우에만 추가
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    areAllSetsCompleted ? SpotColor.success.opacity(0.2) :
-                    isActive ? SpotColor.primary.opacity(0.2) :
-                    areSomeSetsCompleted ? SpotColor.warning.opacity(0.2) :
-                    Color.clear,
-                    lineWidth: 1
-                )
-        )
-        .cornerRadius(12)
-        // 최소화 애니메이션 적용
-        .contentShape(Rectangle())
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isMinimized)
-        // 최소화 상태에 따라 높이 조정 - 최소화 상태일 때는 헤더만 표시
-        .frame(height: isMinimized ? 65 : nil)
-        // 탭 제스처 - 최소화 상태일 때 전체 영역 탭으로도 최대화 가능
-        .onTapGesture {
-            if isMinimized {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isMinimized = false
-                }
-            }
-        }
-    }
-    
-    // 세트 로드 함수
-    private func loadSets() {
-        print("세트 로드 중... 운동: \(exercise.name)")
+    // 세트 로드
+    func loadSets() -> [WorkoutSet] {
         let loadedSets = viewModel.getSetsForExercise(exercise)
         
         if loadedSets.isEmpty {
@@ -143,15 +32,199 @@ struct ActiveWorkoutExerciseView: View {
             if updatedSets.isEmpty {
                 // 여전히 세트가 없다면 로컬 배열에 직접 추가
                 print("경고: 세트 추가 후에도 세트 목록이 비어 있습니다. 수동으로 추가합니다.")
-                sets = [newSet]
+                return [newSet]
             } else {
-                sets = updatedSets
+                return updatedSets
             }
         } else {
             // 이미 세트가 있으면 그대로 사용
-            sets = loadedSets
+            return loadedSets
         }
-        
-        print("로드된 세트 수: \(sets.count)")
+    }
+    
+    // 모든 세트 완료 여부 확인
+    func areAllSetsCompleted(_ sets: [WorkoutSet]) -> Bool {
+        guard !sets.isEmpty else { return false }
+        return sets.allSatisfy { $0.isCompleted }
+    }
+    
+    // 일부 세트 완료 여부 확인
+    func areSomeSetsCompleted(_ sets: [WorkoutSet]) -> Bool {
+        return sets.contains { $0.isCompleted } && !areAllSetsCompleted(sets)
+    }
+    
+    // 운동 상태 계산
+    func calculateExerciseStatus(_ sets: [WorkoutSet]) -> ExerciseCompletionStatus {
+        if areAllSetsCompleted(sets) {
+            return .done
+        } else if areSomeSetsCompleted(sets) {
+            return .active
+        } else {
+            return .idle
+        }
+    }
+}
+*/
+
+// MARK: - 뷰 확장 (스타일링)
+// 이 확장은 ExerciseViewStyles.swift 파일로 이동되어 통합되었습니다
+/*
+extension View {
+    // 운동 컨테이너 스타일 적용
+    func exerciseContainerStyle(
+        status: ExerciseCompletionStatus,
+        isActive: Bool,
+        isMinimized: Bool
+    ) -> some View {
+        self
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(status.backgroundColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(status.borderColor, lineWidth: 1)
+            )
+            .cornerRadius(12)
+            .contentShape(Rectangle())
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isMinimized)
+            .frame(height: isMinimized ? 65 : nil)
+    }
+}
+*/
+
+// MARK: - 운동 뷰 컴포넌트
+struct ActiveWorkoutExerciseView: View {
+    // MARK: - 속성
+    var viewModel: ActiveWorkoutViewModel
+    let exercise: ExerciseItem
+    var isActive: Bool
+    var onMoveUp: (() -> Void)? = nil
+    var onMoveDown: (() -> Void)? = nil
+    
+    // MARK: - 상태
+    @State private var isEditMode: Bool = false
+    @State private var isMinimized: Bool = false
+    @State private var sets: [WorkoutSet] = []
+    
+    // MARK: - 세트 관리자
+    private var setManager: ExerciseSetManagement
+    
+    // MARK: - 초기화
+    init(
+        viewModel: ActiveWorkoutViewModel,
+        exercise: ExerciseItem,
+        isActive: Bool,
+        onMoveUp: (() -> Void)? = nil,
+        onMoveDown: (() -> Void)? = nil
+    ) {
+        self.viewModel = viewModel
+        self.exercise = exercise
+        self.isActive = isActive
+        self.onMoveUp = onMoveUp
+        self.onMoveDown = onMoveDown
+        self.setManager = ExerciseSetManagerImpl(viewModel: viewModel, exercise: exercise)
+    }
+    
+    // MARK: - 상태 계산 속성
+    private var completionStatus: ExerciseCompletionStatus {
+        setManager.calculateExerciseStatus(sets)
+    }
+    
+    // MARK: - 뷰 본문
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 헤더 뷰
+            exerciseHeader
+            
+            // 내용 뷰 (최소화 상태가 아닐 때만)
+            if !isMinimized {
+                exerciseContent
+            }
+        }
+        .exerciseContainerStyle(
+            status: completionStatus,
+            isActive: isActive,
+            isMinimized: isMinimized
+        )
+        .onTapGesture {
+            if isMinimized {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isMinimized = false
+                }
+            }
+        }
+    }
+    
+    // MARK: - 헤더 영역
+    private var exerciseHeader: some View {
+        ExerciseHeaderView(
+            exercise: exercise,
+            isActive: isActive,
+            isMinimized: isMinimized,
+            viewModel: viewModel,
+            onMoveUp: onMoveUp,
+            onMoveDown: onMoveDown,
+            onToggleMinimized: toggleMinimized,
+            completionStatus: completionStatus,
+            isEditMode: isEditMode,
+            onEditModeToggle: toggleEditMode
+        )
+        .onAppear {
+            refreshSets()
+        }
+        .onChange(of: exercise.id) { _, _ in
+            refreshSets()
+        }
+    }
+    
+    // MARK: - 내용 영역
+    private var exerciseContent: some View {
+        VStack(spacing: 0) {
+            // 세트 섹션
+            ExerciseSetSection(
+                sets: sets,
+                isEditMode: isEditMode,
+                areAllSetsCompleted: setManager.areAllSetsCompleted(sets),
+                areSomeSetsCompleted: setManager.areSomeSetsCompleted(sets)
+            )
+            
+            // 세트 목록
+            SetListContainer(
+                sets: $sets,
+                viewModel: viewModel,
+                exercise: exercise,
+                isActive: isActive,
+                isEditMode: isEditMode
+            )
+            
+            // 컨트롤 버튼 섹션
+            ExerciseControlButtonsSection(
+                isEditMode: isEditMode,
+                viewModel: viewModel,
+                exercise: exercise,
+                onEditModeToggle: toggleEditMode,
+                onSetsUpdate: refreshSets,
+                sets: $sets
+            )
+        }
+    }
+    
+    // MARK: - 상태 토글 메서드
+    private func toggleMinimized() {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            isMinimized.toggle()
+        }
+    }
+    
+    private func toggleEditMode() {
+        withAnimation {
+            isEditMode.toggle()
+        }
+    }
+    
+    // MARK: - 세트 관리
+    private func refreshSets() {
+        sets = setManager.loadSets()
     }
 }
