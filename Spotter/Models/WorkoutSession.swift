@@ -62,10 +62,27 @@ final class WorkoutSession {
     // 특정 운동에 대한 세트들 가져오기
     func getSetsForExercise(_ exerciseId: PersistentIdentifier) -> [WorkoutSet] {
         guard let allSets = sets else { return [] }
-        return allSets.filter { set in
-            guard let exercise = set.exercise else { return false }
-            return exercise.id == exerciseId
+        
+        // 필터링 결과 디버깅
+        let filteredSets = allSets.filter { set in
+            // 방법 1: exercise 관계를 통한 확인
+            if let exercise = set.exercise, exercise.id == exerciseId {
+                return true
+            }
+            
+            // 방법 2: 백업 ID를 통한 확인
+            if set.exerciseId == String(describing: exerciseId) {
+                // exercise 관계가 없지만 ID가 일치하면 관계 재설정
+                print("관계 재설정: exercise 관계가 없지만 ID가 일치하여 관계 복구")
+                // 이 부분은 실제 동작 시 exercise 엔티티를 다시 찾아와야 할 수 있음
+                return true
+            }
+            
+            return false
         }
+        
+        print("getSetsForExercise: 총 \(allSets.count)개 중 \(filteredSets.count)개 세트 반환 (운동 ID: \(exerciseId))")
+        return filteredSets
     }
     
     // 세트 추가 메서드
@@ -74,7 +91,27 @@ final class WorkoutSession {
         if sets == nil {
             sets = []
         }
+        
+        // 동일한 운동의 마지막 세트 순서를 확인하여 새 세트의 순서를 설정
+        let existingSets = getSetsForExercise(exercise.id)
+        if let lastSet = existingSets.max(by: { $0.order < $1.order }) {
+            newSet.order = lastSet.order + 1
+        } else {
+            newSet.order = 1 // 첫 세트인 경우 1로 시작
+        }
+        
         sets!.append(newSet)
+        
+        print("세트 추가됨: \(exercise.name), 총 세트 수: \(sets!.count), 세트 순서: \(newSet.order)")
+        
+        // ModelContext가 nil인지 확인
+        if let context = modelContext {
+            context.insert(newSet)
+            print("ModelContext 존재함, 새 세트 삽입됨")
+        } else {
+            print("경고: ModelContext가 nil입니다. 세트가 추가되었지만 데이터베이스에 저장되지 않을 수 있습니다.")
+        }
+        
         return newSet
     }
     

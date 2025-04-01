@@ -9,8 +9,8 @@ import Combine
 
 @Observable
 class ActiveWorkoutViewModel {
-    // 데이터 모델 컨텍스트
-    private var modelContext: ModelContext
+    // 데이터 모델 컨텍스트 - internal로 변경하여 외부에서 접근 가능하도록 함
+    var modelContext: ModelContext
     
     // 현재 세션
     var currentSession: WorkoutSession
@@ -21,16 +21,17 @@ class ActiveWorkoutViewModel {
     
     // 운동 목록
     var exercises: [ExerciseItem] = []
+
     
     // 완료된 운동 목록 속성 추가
     var completedExercises: [ExerciseItem] {
         // 모든 세트가 완료된 운동만 완료된 운동으로 간주
         return exercises.filter { exercise in
-            let sets = getSetsForExercise(exercise)
+            guard let sets = currentSession.sets else { return false }
             // 세트가 없으면 완료되지 않은 것으로 간주
             guard !sets.isEmpty else { return false }
             // 모든 세트가 완료되어야 완료된 운동으로 간주
-            return sets.allSatisfy { $0.isCompleted }
+            return sets.filter { $0.exercise == exercise }.allSatisfy { $0.isCompleted }
         }
     }
     
@@ -57,6 +58,9 @@ class ActiveWorkoutViewModel {
     // LiveActivity와의 통합을 위한 참조
     private let liveActivityManager = LiveActivityManager.shared
     
+    // LiveActivity에 경과 시간 업데이트 (1초 간격)
+    private var liveActivityTimer: Timer?
+    
     init(modelContext: ModelContext, session: WorkoutSession) {
         self.modelContext = modelContext
         self.currentSession = session
@@ -65,14 +69,39 @@ class ActiveWorkoutViewModel {
         if let templateExercises = session.template?.exercises {
             self.exercises = templateExercises
         }
+
+        // 이전 세션 상태 복원
+        self.restoreSessionState()
         
-        // 타이머 시작
-        startTimer()
+        // LiveActivity 시작
+        if let workoutTemplate = session.template {
+            liveActivityManager.startWorkoutActivity(workoutName: workoutTemplate.name)
+        } else {
+            liveActivityManager.startWorkoutActivity(workoutName: "커스텀 운동")
+        }
+        
+        // LiveActivity 업데이트 타이머 시작
+        setupLiveActivityTimer()
     }
     
     deinit {
+        print("ActiveWorkoutViewModel deinit 호출됨")
+        
+        // 타이머 중지
         timer?.invalidate()
+        timer = nil
+        
+        // 휴식 타이머 중지
         restTimerManager.stopTimer()
+        
+        // LiveActivity 종료
+        liveActivityManager.endActivity()
+        
+        // 타이머 정리
+        liveActivityTimer?.invalidate()
+        liveActivityTimer = nil
+        
+        print("ActiveWorkoutViewModel 리소스 정리 완료")
     }
     
     // 타이머 시작
@@ -90,20 +119,28 @@ class ActiveWorkoutViewModel {
     
     // 특정 운동에 대한 세트 목록 가져오기
     func getSetsForExercise(_ exercise: ExerciseItem) -> [WorkoutSet] {
-        return currentSession.getSetsForExercise(exercise.id)
+        let sets = currentSession.getSetsForExercise(exercise.id)
+        // 세트를 order 속성에 따라 정렬 (오름차순)
+        return sets.sorted { $0.order < $1.order }
     }
     
     // 세트 추가
     @discardableResult
     func addSet(for exercise: ExerciseItem) -> WorkoutSet {
+        print("ViewModel: 세트 추가 시작 - 운동: \(exercise.name)")
+        
         let newSet = currentSession.addSet(for: exercise)
+        
+        print("ViewModel: currentSession sets 개수: \(currentSession.sets?.count ?? 0)")
         
         do {
             try modelContext.save()
+            print("ViewModel: modelContext 저장 성공")
         } catch {
-            print("세트 추가 중 오류 발생: \(error)")
+            print("ViewModel: 세트 추가 중 오류 발생: \(error)")
+            print("ViewModel: 오류 상세 - \(error.localizedDescription)")
         }
-        
+
         return newSet
     }
     
@@ -146,6 +183,11 @@ class ActiveWorkoutViewModel {
         
         // 순서 변경
         sets.move(fromOffsets: source, toOffset: destination)
+        
+        // order 속성 업데이트
+        for (index, set) in sets.enumerated() {
+            set.order = index + 1
+        }
         
         // 세션의 세트 목록에서 해당 운동의 세트를 모두 제거
         currentSession.sets?.removeAll(where: { $0.exercise?.id == exercise.id })
@@ -480,5 +522,70 @@ class ActiveWorkoutViewModel {
         }
         
         print("운동 목록 업데이트 완료: \(exercisesToAdd.count)개 추가, \(exercisesToRemove.count)개 제거")
+    }
+
+    // 완료된 운동에 새 세트 추가 (기존 세트는 그대로 두고 새 세트만 추가)
+    func addSetToCompletedExercise(_ exercise: ExerciseItem) {
+        // 운동에 연결된 모든 세트를 가져옴
+        let sets = getSetsForExercise(exercise)
+        
+        // 마지막 세트의 무게와 횟수 정보 참조
+        var lastWeight: Double = 0.0
+        var lastReps: Int = 0
+        
+        if let lastSet = sets.last, lastSet.weight > 0, lastSet.reps > 0 {
+            lastWeight = lastSet.weight
+            lastReps = lastSet.reps
+        }
+        
+        // 현재 진행 중인 운동이 있는지 확인
+        if let currentExercise = currentActiveExercise {
+            // 현재 진행 중인 운동이 있으면 세트는 대기중 운동으로 추가
+            // 새로운 세트 추가 (이전 세트의 무게와 횟수 정보 유지)
+            let newSet = addSet(for: exercise)
+            
+            // 이전 세트의 무게와 횟수 정보가 있다면 적용
+            if lastWeight > 0 && lastReps > 0 {
+                newSet.weight = lastWeight
+                newSet.reps = lastReps
+            }
+        } else {
+            // 현재 진행 중인 운동이 없으면 해당 운동을 활성화하고 세트 추가
+            // 완료된 운동을 다시 활성화
+            for set in sets {
+                set.isCompleted = true
+            }
+            
+            // 새로운 세트 추가 (이전 세트의 무게와 횟수 정보 유지)
+            let newSet = addSet(for: exercise)
+            
+            // 이전 세트의 무게와 횟수 정보가 있다면 적용
+            if lastWeight > 0 && lastReps > 0 {
+                newSet.weight = lastWeight
+                newSet.reps = lastReps
+            }
+            
+            // 이 운동을 현재 활성 운동으로 설정
+            currentActiveExercise = exercise
+        }
+        
+        do {
+            try modelContext.save()
+            print("완료된 운동에 새 세트 추가됨: \(exercise.name)")
+        } catch {
+            print("세트 추가 중 오류 발생: \(error)")
+        }
+    }
+
+    // LiveActivity에 경과 시간 업데이트 (1초 간격)
+    private func setupLiveActivityTimer() {
+        liveActivityTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self = self, self.isActive else { return }
+            
+            // 활성 타이머가 없는 경우에만 LiveActivity 업데이트
+            if !self.restTimerActive {
+                self.liveActivityManager.updateWorkoutTime()
+            }
+        }
     }
 }

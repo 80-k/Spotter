@@ -26,7 +26,7 @@ struct WorkoutExerciseSelectorView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack {
                 List {
                     ForEach(filteredExercises) { exercise in
@@ -75,10 +75,17 @@ struct WorkoutExerciseSelectorView: View {
             }
             .navigationTitle("운동 선택")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
                         dismiss()
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .medium))
+                            Text("닫기")
+                        }
                     }
                 }
             }

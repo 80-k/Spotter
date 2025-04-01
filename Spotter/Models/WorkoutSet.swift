@@ -13,17 +13,23 @@ final class WorkoutSet {
     var isCompleted: Bool = false
     var restTime: TimeInterval = 60 // 기본 휴식 시간 60초
     var startRestTime: Date?
+    var order: Int = 0 // 세트 순서 (높은 값이 나중에 추가된 세트)
     
     // 관계 설정
     @Relationship(inverse: \WorkoutSession.sets)
     var session: WorkoutSession?
     
-    // 운동 관계 설정 - 저장되어야 하는 관계
-    @Attribute(.externalStorage)
+    // 운동 관계 설정 - 명시적 관계로 변경
+    // 참고: .externalStorage 속성은 관계 조회 시 문제를 일으킬 수 있음
+    @Relationship
     var exercise: ExerciseItem?
+    
+    // 운동 ID도 별도로 저장 (관계 조회 오류에 대한 백업)
+    var exerciseId: String = ""
     
     init(exercise: ExerciseItem, session: WorkoutSession? = nil) {
         self.exercise = exercise
+        self.exerciseId = String(describing: exercise.id) // ID를 String으로 명시적 변환
         self.session = session
     }
     

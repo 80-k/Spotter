@@ -29,7 +29,8 @@ struct ActiveWorkoutView: View {
                     elapsedTime: viewModel.elapsedTime,
                     onCancel: { showCancelAlert = true },
                     onComplete: { showCompletionAlert = true },
-                    isCompleteEnabled: viewModel.hasAnyCompletedSet
+                    isCompleteEnabled: viewModel.hasAnyCompletedSet,
+                    templateName: viewModel.currentSession.template?.name
                 )
                 
                 // 휴식 타이머 섹션
@@ -46,14 +47,6 @@ struct ActiveWorkoutView: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    if let templateName = viewModel.currentSession.template?.name {
-                        Text(templateName)
-                            .font(.headline)
-                    }
-                }
-            }
             // 최신 네비게이션 API 사용
             .navigationDestination(isPresented: $navigateToExerciseSelector) {
                 WorkoutSelectionView(

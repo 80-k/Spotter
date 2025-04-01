@@ -19,6 +19,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         return GIDSignIn.sharedInstance.handle(url)
     }
+    
+    // 앱 종료 시 호출
+    func applicationWillTerminate(_ application: UIApplication) {
+        print("AppDelegate: 앱이 종료됩니다. LiveActivity 정리 중...")
+        LiveActivityManager.shared.endActivity()
+    }
 }
 
 @main
@@ -80,6 +86,13 @@ struct SpotterApp: App {
             .modelContainer(sharedModelContainer)
             .onChange(of: scenePhase) { _, newPhase in
                 appStateManager.updateScenePhase(newPhase)
+                
+                // 앱이 백그라운드로 전환될 때 LiveActivity 종료
+                if newPhase == .background {
+                    print("SpotterApp: 백그라운드 전환 감지")
+                    // LiveActivity 처리 (휴식 타이머가 실행 중인 경우에만 종료)
+                    LiveActivityManager.shared.handleAppBackgroundTransition()
+                }
             }
         }
     }

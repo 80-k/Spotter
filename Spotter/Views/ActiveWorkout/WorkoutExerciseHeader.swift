@@ -12,6 +12,8 @@ struct WorkoutExerciseHeader: View {
     let exerciseName: String
     let onRestTimeChange: (TimeInterval) -> Void
     let onDelete: () -> Void
+    var onMoveUp: (() -> Void)? = nil
+    var onMoveDown: (() -> Void)? = nil
     
     @State private var showingRestTimeInfo: Bool = false
     
@@ -34,6 +36,25 @@ struct WorkoutExerciseHeader: View {
             
             // 컨텍스트 메뉴 버튼 추가
             Menu {
+                // 순서 변경 메뉴 추가
+                if onMoveUp != nil || onMoveDown != nil {
+                    Menu("순서 변경") {
+                        if let moveUp = onMoveUp {
+                            Button(action: moveUp) {
+                                Label("위로 이동", systemImage: "arrow.up")
+                            }
+                        }
+                        
+                        if let moveDown = onMoveDown {
+                            Button(action: moveDown) {
+                                Label("아래로 이동", systemImage: "arrow.down")
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                }
+                
                 // 휴식 시간 변경 메뉴
                 Menu("휴식 시간 설정") {
                     Button("30초") { onRestTimeChange(30) }

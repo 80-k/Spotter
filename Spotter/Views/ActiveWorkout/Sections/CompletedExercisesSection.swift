@@ -38,69 +38,88 @@ struct CompletedExerciseItemView: View {
     var exercise: ExerciseItem
     
     var body: some View {
-        Button(action: {
-            // 완료된 운동을 다시 대기 중으로 이동
-            viewModel.reactivateExercise(exercise)
-        }) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    // 운동 이름
-                    Text(exercise.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    // 완료 아이콘 + 재활성화 안내
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                // 운동 이름
+                Text(exercise.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // 세트 추가 버튼
+                Button(action: {
+                    viewModel.addSetToCompletedExercise(exercise)
+                }) {
                     HStack(spacing: 4) {
-                        Text("터치하여 재시작")
+                        Text("세트 추가")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.green)
                         
-                        Image(systemName: "arrow.counterclockwise.circle.fill")
+                        Image(systemName: "plus.circle.fill")
                             .foregroundColor(.green)
                     }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.1))
+                    )
                 }
+                .buttonStyle(PlainButtonStyle())
                 
-                // 세트 정보 및 통계
-                HStack {
-                    // 세트 수
-                    // 이름 변경: InfoLabel → ExerciseInfoLabel
-                    ExerciseInfoLabel(
-                        icon: "number.circle.fill",
-                        label: "\(viewModel.getSetsForExercise(exercise).count) 세트",
-                        color: .blue
-                    )
-                    
-                    Spacer()
-                    
-                    // 휴식 시간
-                    ExerciseInfoLabel(
-                        icon: "timer",
-                        label: formatDuration(viewModel.totalRestTimeForExercise(exercise)),
-                        color: .orange
-                    )
-                    
-                    Spacer()
-                    
-                    // 총 볼륨 (무게 × 횟수)
-                    ExerciseInfoLabel(
-                        icon: "scalemass.fill",
-                        label: String(format: "%.1f kg", viewModel.totalVolumeForExercise(exercise)),
-                        color: .purple
-                    )
+                // 운동 재시작 버튼 (드롭다운 메뉴로 변경)
+                Menu {
+                    Button(action: {
+                        // 기존 재시작 기능 (모든 세트를 미완료 상태로 변경)
+                        viewModel.reactivateExercise(exercise)
+                    }) {
+                        Label("전체 재시작", systemImage: "arrow.counterclockwise")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundColor(.secondary)
+                        .padding(8)
                 }
-                .padding(.top, 4)
             }
-            .padding()
-            .background(Color.green.opacity(0.05))
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
-            )
+            
+            // 세트 정보 및 통계
+            HStack {
+                // 세트 수
+                // 이름 변경: InfoLabel → ExerciseInfoLabel
+                ExerciseInfoLabel(
+                    icon: "number.circle.fill",
+                    label: "\(viewModel.getSetsForExercise(exercise).count) 세트",
+                    color: .blue
+                )
+                
+                Spacer()
+                
+                // 휴식 시간
+                ExerciseInfoLabel(
+                    icon: "timer",
+                    label: formatDuration(viewModel.totalRestTimeForExercise(exercise)),
+                    color: .orange
+                )
+                
+                Spacer()
+                
+                // 총 볼륨 (무게 × 횟수)
+                ExerciseInfoLabel(
+                    icon: "scalemass.fill",
+                    label: String(format: "%.1f kg", viewModel.totalVolumeForExercise(exercise)),
+                    color: .purple
+                )
+            }
+            .padding(.top, 4)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(Color.green.opacity(0.05))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.green.opacity(0.2), lineWidth: 1)
+        )
     }
     
     // 시간 포맷팅

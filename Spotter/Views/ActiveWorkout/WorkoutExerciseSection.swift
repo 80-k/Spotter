@@ -12,6 +12,8 @@ struct WorkoutExerciseSection: View {
     var viewModel: ActiveWorkoutViewModel
     let exercise: ExerciseItem
     var isActive: Bool
+    var onMoveUp: (() -> Void)? = nil
+    var onMoveDown: (() -> Void)? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -23,7 +25,9 @@ struct WorkoutExerciseSection: View {
                 },
                 onDelete: {
                     viewModel.exerciseToDelete = exercise
-                }
+                },
+                onMoveUp: onMoveUp,
+                onMoveDown: onMoveDown
             )
             
             // 세트 목록

@@ -48,12 +48,6 @@ struct WorkoutHistoryTabView: View {
                 .animation(.easeInOut, value: selectedTab)
             }
             .navigationTitle("운동 기록")
-            .toolbar {
-                // 테마 토글 버튼 추가
-                ToolbarItem(placement: .topBarTrailing) {
-                    CompactThemeToggleButton()
-                }
-            }
             // 운동 완료 알림 수신 시 기록 새로고침
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("WorkoutCompleted"))) { _ in
                 print("운동 완료 알림 수신")

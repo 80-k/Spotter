@@ -88,21 +88,24 @@ class RestTimerManager {
             
             // 타이머 완료 시
             if viewModel.remainingRestTime <= 0 {
-                viewModel.restTimerActive = false
+                // 타이머 중지
+                timer.invalidate()
+                self.restTimer = nil
                 
-                // 진동 피드백
+                // 상태 업데이트
+                viewModel.restTimerActive = false
+                viewModel.remainingRestTime = 0
+                
+                // LiveActivity 업데이트
+                self.liveActivityManager.switchToWorkoutMode()
+                
+                // 완료 알림 (햅틱 피드백)
                 #if os(iOS)
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
                 #endif
                 
-                // LiveActivity 업데이트
-                self.liveActivityManager.switchToWorkoutMode()
-                
-                // 타이머 중지
-                self.stopTimer()
-                
-                print("휴식 타이머 완료: 운동 모드로 전환")
+                // 후속 타이머 시작 취소 (타이머가 완료되면 상위 뷰모델에서 처리)
             }
         }
         
@@ -184,7 +187,7 @@ class RestTimerManager {
                 
                 // 타이머 중지
                 stopTimer()
-            } else {
+            
                 // 타이머가 아직 활성 상태면 LiveActivity 업데이트
                 if let exercise = viewModel.currentActiveExercise {
                     liveActivityManager.updateRestTimer(
@@ -207,8 +210,8 @@ class RestTimerManager {
                 }
             }
         } else if let viewModel = viewModel, !viewModel.restTimerActive {
-            // 일반 운동 모드
-            liveActivityManager.switchToWorkoutMode()
+            // 일반 운동 모드 - 운동 시간 명시적으로 동기화
+            liveActivityManager.updateWorkoutTime()
         }
         
         // 백그라운드 시간 초기화

@@ -11,41 +11,57 @@ struct ActiveWorkoutHeaderView: View {
     let onCancel: () -> Void
     let onComplete: () -> Void
     let isCompleteEnabled: Bool
+    var templateName: String? = nil
     
     var body: some View {
-        HStack {
-            // 경과 시간
-            StopwatchView(elapsedTime: elapsedTime)
-                .font(.title2)
-            
-            Spacer()
-            
-            // 취소 버튼
-            Button(action: onCancel) {
-                Text("취소")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.red)
-                    .cornerRadius(8)
+        VStack(spacing: 0) {
+            // 템플릿 이름과 운동 세션 진행 중 표시
+            if let name = templateName {
+                HStack {
+                    Text("\(name) - 운동 세션 진행 중")
+                        .font(.headline)
+                        .foregroundColor(Color.primary)
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+                    
+                    Spacer()
+                }
             }
-            .padding(.trailing, 8)
             
-            // 완료 버튼
-            Button(action: onComplete) {
-                Text("완료")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(isCompleteEnabled ? Color.blue : Color.gray)
-                    .cornerRadius(8)
+            HStack {
+                // 경과 시간
+                StopwatchView(elapsedTime: elapsedTime)
+                    .font(.title2)
+                
+                Spacer()
+                
+                // 취소 버튼
+                Button(action: onCancel) {
+                    Text("취소")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.red)
+                        .cornerRadius(8)
+                }
+                .padding(.trailing, 8)
+                
+                // 완료 버튼
+                Button(action: onComplete) {
+                    Text("완료")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(isCompleteEnabled ? Color.blue : Color.gray)
+                        .cornerRadius(8)
+                }
+                .disabled(!isCompleteEnabled)
             }
-            .disabled(!isCompleteEnabled)
+            .padding()
+            .background(Color.secondary.opacity(0.1))
         }
-        .padding()
-        .background(Color.secondary.opacity(0.1))
     }
 }
 
@@ -82,6 +98,10 @@ struct ActiveExerciseHeaderView: View {
     var completionStatus: ExerciseCompletionStatus = .notCompleted
     let onRestTimeChange: (TimeInterval) -> Void
     let onDelete: () -> Void
+    var onMoveUp: (() -> Void)? = nil
+    var onMoveDown: (() -> Void)? = nil
+    var isEditMode: Bool = false
+    var onEditModeToggle: (() -> Void)? = nil
     
     @State private var showingRestTimeInfo: Bool = false
     
@@ -109,6 +129,35 @@ struct ActiveExerciseHeaderView: View {
             
             // 컨텍스트 메뉴 버튼 추가
             Menu {
+                // 순서 변경 메뉴 추가
+                if onMoveUp != nil || onMoveDown != nil {
+                    Menu("순서 변경") {
+                        if let moveUp = onMoveUp {
+                            Button(action: moveUp) {
+                                Label("위로 이동", systemImage: "arrow.up")
+                            }
+                        }
+                        
+                        if let moveDown = onMoveDown {
+                            Button(action: moveDown) {
+                                Label("아래로 이동", systemImage: "arrow.down")
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                }
+                
+                // 세트 순서 변경 메뉴 추가
+                if let toggle = onEditModeToggle {
+                    Button(action: toggle) {
+                        Label(isEditMode ? "세트 순서 변경 완료" : "세트 순서 변경", 
+                              systemImage: isEditMode ? "checkmark.circle" : "arrow.up.arrow.down")
+                    }
+                    
+                    Divider()
+                }
+                
                 // 휴식 시간 변경 메뉴
                 Menu("휴식 시간 설정") {
                     Button("30초") { onRestTimeChange(30) }

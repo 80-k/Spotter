@@ -4,6 +4,9 @@
 
 import Foundation
 import ActivityKit
+import Combine
+import SwiftUI
+import UIKit
 
 class LiveActivityManager {
     static let shared = LiveActivityManager()
@@ -26,18 +29,91 @@ class LiveActivityManager {
     private var lastRestUpdateTime: Date = Date()
     
     // 업데이트 제한 간격 (초) - 모드 전환에는 더 짧은 간격 적용
-    private let regularUpdateInterval: TimeInterval = 0.5  // 일반 업데이트
+    private let regularUpdateInterval: TimeInterval = 0.3  // 일반 업데이트 - 더 빠른 업데이트를 위해 0.5 -> 0.3으로 줄임
     private let transitionUpdateInterval: TimeInterval = 0.1  // 모드 전환용
     
     // 운동 세부 정보 저장
     private var workoutName: String = ""
     private var workoutStartTime: Date = Date()
     private var restExerciseName: String = ""
+    private var lastElapsedTime: TimeInterval = 0  // 마지막으로 기록된 경과 시간
     
     // 마지막 휴식 타이머 값 (0이 되었을 때 중복 호출 방지)
     private var lastRestTimeValue: Int = -1
     
-    private init() {}
+    // 앱 종료 감지를 위한 Notification 구독
+    private var cancellables = Set<AnyCancellable>()
+    
+    private init() {
+        // 앱 종료 및 백그라운드 전환 감지
+        setupNotifications()
+        
+        // AppStateManager에 등록
+        registerWithAppStateManager()
+    }
+    
+    // 앱 상태 변경 감지를 위한 알림 설정
+    private func setupNotifications() {
+        // 앱 종료 감지
+        NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)
+            .sink { [weak self] _ in
+                print("앱 종료 감지: LiveActivity 종료 중...")
+                self?.endAllActivities()
+            }
+            .store(in: &cancellables)
+        
+        // 앱이 백그라운드로 전환될 때 타이머 중지
+        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { [weak self] _ in
+                print("앱 백그라운드 전환 감지: LiveActivity 상태 저장 중...")
+                self?.handleBackgroundTransition()
+            }
+            .store(in: &cancellables)
+    }
+    
+    // AppStateManager와 연동
+    private func registerWithAppStateManager() {
+        let appStateManager = AppStateManager.shared
+        
+        // 백그라운드 전환 시 콜백
+        appStateManager.onBackgrounded = { [weak self] in
+            print("AppStateManager: 앱이 백그라운드로 전환됨")
+            self?.handleBackgroundTransition()
+        }
+    }
+    
+    // 앱이 백그라운드로 전환될 때 처리
+    private func handleBackgroundTransition() {
+        // 휴식 타이머가 실행 중인 경우에는 종료
+        if currentMode == .restTimer {
+            print("백그라운드 전환: 휴식 타이머 실행 중 - LiveActivity 종료")
+            endAllActivities()
+        }
+    }
+    
+    // 백그라운드 전환을 외부에서 처리할 수 있는 public 메서드
+    func handleAppBackgroundTransition() {
+        print("LiveActivityManager: 앱 백그라운드 전환 처리")
+        handleBackgroundTransition()
+    }
+    
+    // 모든 활동 즉시 종료 (앱 종료 시 호출)
+    private func endAllActivities() {
+        if let activity = currentActivity {
+            Task {
+                do {
+                    // 즉시 종료 정책 사용
+                    await activity.end(dismissalPolicy: .immediate)
+                    print("LiveActivity 즉시 종료 성공")
+                } catch {
+                    print("LiveActivity 종료 실패: \(error)")
+                }
+            }
+        }
+        
+        currentActivity = nil
+        currentMode = .none
+    }
     
     // 모든 활동 종료 및 상태 초기화
     func reset() {
@@ -249,23 +325,35 @@ class LiveActivityManager {
     }
     
     // 운동 시간 업데이트 - 최적화된 버전
-    func updateElapsedTime() {
+    func updateWorkoutTime(elapsedTime: TimeInterval? = nil) {
         guard let activity = currentActivity else { return }
         
-        // 휴식 타이머 모드면 업데이트 무시
+        // 이미 휴식 타이머 모드면 변경 필요 없음
         if currentMode == .restTimer {
             return
         }
         
-        // 업데이트 제한 (초당 2회 이상 방지)
+        // 업데이트 제한 (너무 빠른 연속 업데이트 방지)
         let now = Date()
         if now.timeIntervalSince(lastWorkoutUpdateTime) < regularUpdateInterval {
             return
         }
         
+        // 경과 시간 계산
+        let calculatedElapsedTime = elapsedTime ?? now.timeIntervalSince(workoutStartTime)
+        
+        // 이전 업데이트와 같은 시간이라면 업데이트하지 않음
+        // 하지만 1초 이상 차이가 나면 강제 업데이트 (동기화 오차 방지)
+        if abs(calculatedElapsedTime - lastElapsedTime) < 1.0 {
+            return
+        }
+        
+        // 시간 저장
+        lastElapsedTime = calculatedElapsedTime
+        
         let updatedState = WorkoutActivityAttributes.ContentState(
             startTime: workoutStartTime,
-            elapsedTime: Date().timeIntervalSince(workoutStartTime),
+            elapsedTime: calculatedElapsedTime,
             isRestTimer: false,
             restExerciseName: "",
             restTimeRemaining: 0
@@ -275,14 +363,8 @@ class LiveActivityManager {
         
         Task {
             await activity.update(updatedContent)
-            
-            // 모드 확인 및 설정
-            if currentMode != .workout {
-                currentMode = .workout
-                print("모드 업데이트: 운동 모드")
-            }
-            
-            lastWorkoutUpdateTime = Date()
+            currentMode = .workout
+            lastWorkoutUpdateTime = now
         }
     }
     
@@ -293,25 +375,24 @@ class LiveActivityManager {
             return
         }
         
-        let finalState = WorkoutActivityAttributes.ContentState(
-            startTime: workoutStartTime,
-            elapsedTime: Date().timeIntervalSince(workoutStartTime),
-            isRestTimer: false,
-            restExerciseName: "",
-            restTimeRemaining: 0
-        )
-        
-        let finalContent = ActivityContent(state: finalState, staleDate: nil)
-        
+        // 즉시 종료하는 방식으로 변경
         Task {
-            await activity.end(finalContent, dismissalPolicy: .immediate)
-            
-            // 상태 초기화
-            currentActivity = nil
-            currentMode = .none
-            lastRestTimeValue = -1
-            
-            print("LiveActivity 종료 완료")
+            do {
+                // 즉시 종료 정책 사용
+                await activity.end(dismissalPolicy: .immediate)
+                
+                // 상태 초기화
+                currentActivity = nil
+                currentMode = .none
+                lastRestTimeValue = -1
+                
+                print("LiveActivity 종료 완료")
+            } catch {
+                print("LiveActivity 종료 중 오류 발생: \(error)")
+                
+                // 오류 발생 시 강제 종료 시도
+                endAllActivities()
+            }
         }
     }
     
