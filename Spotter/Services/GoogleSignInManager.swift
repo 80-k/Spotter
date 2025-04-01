@@ -33,7 +33,7 @@ class GoogleSignInManager: ObservableObject {
     
     // 자동 로그인 시도 (앱 시작 시)
     private func restorePreviousSignIn() {
-        GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, error in
+        GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] result, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -42,61 +42,52 @@ class GoogleSignInManager: ObservableObject {
             }
             
             // 사용자 정보 업데이트
-            self.handleSignInResult(user: user)
+            self.handleSignInResult(user: result)
         }
     }
     
-    // 로그인 요청 - SwiftUI 환경에서 사용
-    func signIn(completion: @escaping (Bool, Error?) -> Void) {
+    /// 로그인 요청 - SwiftUI 환경에서 사용
+    func signIn(completion: @escaping (Result<Void, Error>) -> Void) {
+        isLoggingIn = true
+        
         // 루트 뷰 컨트롤러 가져오기 (iOS 15+ 방식)
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = windowScene.windows.first?.rootViewController else {
-            completion(false, NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "루트 뷰 컨트롤러를 찾을 수 없습니다."]))
+            completion(.failure(NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "루트 뷰 컨트롤러를 찾을 수 없습니다."])))
             return
         }
         
+        // 구글 로그인 창 표시
         signIn(with: rootVC, completion: completion)
     }
     
-    // 로그인 요청 - UIKit 방식 (직접 호출하지 않음)
-    func signIn(with viewController: UIViewController, completion: @escaping (Bool, Error?) -> Void) {
+    /// 로그인 요청 - UIKit 방식 (직접 호출하지 않음)
+    func signIn(with viewController: UIViewController, completion: @escaping (Result<Void, Error>) -> Void) {
         isLoggingIn = true
         
-        // Firebase에서 클라이언트 ID 가져오기
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            isLoggingIn = false
-            let error = NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "클라이언트 ID를 찾을 수 없습니다."])
-            completion(false, error)
-            return
+        // GIDSignIn을 사용하여 로그인 수행
+        GIDSignIn.sharedInstance.signIn(
+            withPresenting: viewController
+        ) { [weak self] result, error in
+            guard let self = self else { return }
+            self.isLoggingIn = false
+            
+            if let error = error {
+                print("Google 로그인 오류: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+            
+            guard let result = result else {
+                let error = NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "로그인 결과가 없습니다."])
+                completion(.failure(error))
+                return
+            }
+            
+            // 사용자 정보 업데이트
+            self.handleSignInResult(user: result.user)
+            completion(.success(()))
         }
-        
-        // Google 로그인 설정
-        let signInConfig = GIDConfiguration(clientID: clientID)
-//        
-//        // 로그인 창 표시 - 정확한 메서드 시그니처 사용
-//        GIDSignIn.sharedInstance.signIn(
-//            with: signInConfig,
-//            presenting: viewController
-//        ) { [weak self] signInResult, error in
-//            guard let self = self else { return }
-//            self.isLoggingIn = false
-//            
-//            if let error = error {
-//                print("Google 로그인 오류: \(error.localizedDescription)")
-//                completion(false, error)
-//                return
-//            }
-//            
-//            guard let signInResult = signInResult else {
-//                let error = NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "로그인 결과가 없습니다."])
-//                completion(false, error)
-//                return
-//            }
-//            
-//            // 사용자 정보 업데이트
-//            self.handleSignInResult(user: signInResult.user)
-//            completion(true, nil)
-//        }
     }
     
     // 로그아웃
@@ -166,9 +157,12 @@ struct GoogleSignInButton: View {
     var body: some View {
         Button(action: {
             isLoading = true
-            signInManager.signIn { success, error in
+            signInManager.signIn { result in
                 isLoading = false
-                if !success, let error = error {
+                switch result {
+                case .success:
+                    print("Google 로그인 성공")
+                case .failure(let error):
                     errorMessage = error.localizedDescription
                     showingErrorAlert = true
                     print("Google 로그인 실패: \(error.localizedDescription)")
@@ -215,10 +209,13 @@ struct GoogleSignInButtonAlt: View {
     var body: some View {
         Button(action: {
             isLoading = true
-            signInManager.signIn { success, error in
+            signInManager.signIn { result in
                 DispatchQueue.main.async {
                     isLoading = false
-                    if !success, let error = error {
+                    switch result {
+                    case .success:
+                        print("Google 로그인 성공")
+                    case .failure(let error):
                         errorMessage = error.localizedDescription
                         showingErrorAlert = true
                         print("Google 로그인 실패: \(error.localizedDescription)")

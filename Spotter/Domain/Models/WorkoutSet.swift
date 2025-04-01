@@ -5,6 +5,7 @@
 import Foundation
 import SwiftData
 
+/// 운동 세트 모델
 @Model
 final class WorkoutSet {
     // 기본 정보
@@ -16,50 +17,48 @@ final class WorkoutSet {
     var order: Int = 0 // 세트 순서 (높은 값이 나중에 추가된 세트)
     
     // 관계 설정
-    @Relationship(inverse: \WorkoutSession.sets)
-    var session: WorkoutSession?
+    @Relationship(inverse: \WorkoutSession.workoutSets)
+    var workoutSession: WorkoutSession? // session → workoutSession으로 변경
     
-    // 운동 관계 설정 - 명시적 관계로 변경
-    // 참고: .externalStorage 속성은 관계 조회 시 문제를 일으킬 수 있음
+    // 운동 관계 설정
     @Relationship
-    var exercise: ExerciseItem?
+    var exerciseItem: ExerciseItem? // exercise → exerciseItem으로 변경
     
     // 운동 ID도 별도로 저장 (관계 조회 오류에 대한 백업)
     var exerciseId: String = ""
     
-    init(exercise: ExerciseItem, session: WorkoutSession? = nil) {
-        self.exercise = exercise
-        self.exerciseId = String(describing: exercise.id) // ID를 String으로 명시적 변환
-        self.session = session
+    init(exerciseItem: ExerciseItem, workoutSession: WorkoutSession? = nil) {
+        self.exerciseItem = exerciseItem
+        self.exerciseId = String(describing: exerciseItem.id) // ID를 String으로 명시적 변환
+        self.workoutSession = workoutSession
     }
     
-    // 세트 완료 메서드 - 무게와 횟수 정보 유지
+    /// 세트 완료
     func completeSet() {
-        // 무게와 횟수가 0이면 기본값 유지 또는 기본값 설정
-        // 이미 입력된 값이 있다면 그대로 유지
-        // 없다면 0으로 유지
-        
-        // 완료 상태로 변경
         isCompleted = true
         startRestTime = Date()
     }
     
-    // 세트 재개 메서드 - 무게와 횟수 정보 유지
+    /// 세트 재개
     func resumeSet() {
-        // 무게와 횟수 정보는 그대로 유지
         isCompleted = false
         startRestTime = nil
     }
     
-    // 현재 휴식 경과 시간 계산
+    /// 현재 휴식 경과 시간 계산
     var currentRestDuration: TimeInterval {
         guard isCompleted, let startRest = startRestTime else { return 0 }
         return Date().timeIntervalSince(startRest)
     }
     
-    // 남은 휴식 시간 계산
+    /// 남은 휴식 시간 계산
     var remainingRestTime: TimeInterval {
         let elapsed = currentRestDuration
         return max(0, restTime - elapsed)
     }
-}
+    
+    /// 총 무게 (무게 × 횟수)
+    var totalWeight: Double {
+        return weight * Double(reps)
+    }
+} 

@@ -8,7 +8,7 @@ import SwiftData
 struct ActiveWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.appState) private var appState
+    @Environment(\.appState) private var appStateService
     
     @State private var viewModel: ActiveWorkoutViewModel
     @State private var navigateToExerciseSelector = false
@@ -30,14 +30,14 @@ struct ActiveWorkoutView: View {
                     onCancel: { showCancelAlert = true },
                     onComplete: { showCompletionAlert = true },
                     isCompleteEnabled: viewModel.hasAnyCompletedSet,
-                    templateName: viewModel.currentSession.template?.name
+                    templateName: viewModel.currentSession.workoutTemplate?.name
                 )
                 
                 // 휴식 타이머 섹션
-                if viewModel.restTimerActive, let activeExercise = viewModel.currentActiveExercise {
+                if viewModel.restTimerActive, let _ = viewModel.currentActiveExercise, let _ = viewModel.currentActiveSet {
                     ActiveWorkoutRestTimerView(
                         viewModel: viewModel,
-                        activeExercise: activeExercise
+                        activeExercise: viewModel.currentActiveExercise!
                     )
                 }
                 
@@ -91,7 +91,7 @@ struct ActiveWorkoutView: View {
                 clearAppStateCallbacks()
             }
             .onChange(of: scenePhase) { _, newPhase in
-                appState.updateScenePhase(newPhase)
+                appStateService.updateScenePhase(newPhase)
             }
         }
     }
@@ -120,37 +120,29 @@ struct ActiveWorkoutView: View {
     
     // LiveActivity 설정
     private func setupLiveActivity() {
-        LiveActivityManager.shared.reset()
+        LiveActivityService.shared.endActivity()
         
-        LiveActivityManager.shared.startActivity(
-            workoutName: viewModel.currentSession.template?.name ?? "운동",
-            startTime: viewModel.currentSession.startTime
-        )
+        LiveActivityService.shared.startWorkoutActivity(for: viewModel.currentSession)
         
-        if viewModel.restTimerActive, let exercise = viewModel.currentActiveExercise {
-            LiveActivityManager.shared.updateRestTimer(
-                exerciseName: exercise.name,
-                remainingTime: Int(viewModel.remainingRestTime)
-            )
-        } else {
-            LiveActivityManager.shared.switchToWorkoutMode()
+        if viewModel.restTimerActive, let _ = viewModel.currentActiveExercise, let set = viewModel.currentActiveSet {
+            LiveActivityService.shared.startRestTimerActivity(for: set)
         }
     }
     
     // 앱 상태 콜백 설정
     private func setupAppStateCallbacks() {
-        appState.onBackgrounded = { [weak viewModel] in
+        appStateService.onBackgrounded = { [weak viewModel] in
             viewModel?.handleAppBackgrounded()
         }
         
-        appState.onForegrounded = { [weak viewModel] in
+        appStateService.onForegrounded = { [weak viewModel] in
             viewModel?.handleAppForegrounded()
         }
     }
     
     // 앱 상태 콜백 제거
     private func clearAppStateCallbacks() {
-        appState.onBackgrounded = nil
-        appState.onForegrounded = nil
+        appStateService.onBackgrounded = nil
+        appStateService.onForegrounded = nil
     }
 }

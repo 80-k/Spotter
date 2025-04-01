@@ -24,7 +24,7 @@ struct WorkoutSessionDetailView: View {
             List {
                 // 세션 요약 정보
                 Section(header: Text("세션 정보")) {
-                    if let template = session.template {
+                    if let template = session.workoutTemplate {
                         HStack {
                             Text("템플릿")
                             Spacer()
@@ -58,9 +58,9 @@ struct WorkoutSessionDetailView: View {
                 }
                 
                 // 운동별 세트 정보
-                if let template = session.template, let exercises = template.exercises {
+                if let template = session.workoutTemplate, let exercises = template.exerciseItems {
                     ForEach(exercises) { exercise in
-                        let exerciseSets = session.getSetsForExercise(exercise.id)
+                        let exerciseSets = session.fetchSetsForExercise(exercise.id)
                         if !exerciseSets.isEmpty {
                             Section(header: Text(exercise.name)) {
                                 ForEach(exerciseSets) { set in

@@ -31,17 +31,7 @@ struct TemplateHeaderView: View {
 
 // MARK: - 미리보기
 
-#Preview {
-    VStack {
-        TemplateHeaderView(
-            name: "상체 운동",
-            exerciseCount: 5
-        )
-        
-        TemplateHeaderView(
-            name: "빈 템플릿",
-            exerciseCount: 0
-        )
-    }
-    .previewLayout(.sizeThatFits)
+#Preview("템플릿 헤더") {
+    TemplateHeaderView(name: "상체 운동", exerciseCount: 4)
+        .frame(height: 120)
 }

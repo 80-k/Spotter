@@ -34,7 +34,7 @@ struct WorkoutTemplateDetailView: View {
     // 선택된 운동 목록으로 업데이트
     private func updateExercises(with exercises: [ExerciseItem]) {
         // 기존 운동 목록을 새로운 목록으로 대체
-        template.exercises = []
+        template.exerciseItems = []
         
         for exercise in exercises {
             template.addExercise(exercise)
@@ -58,7 +58,7 @@ struct WorkoutTemplateDetailView: View {
             // Top header
             TemplateHeaderView(
                 name: template.name,
-                exerciseCount: template.exercises?.count ?? 0
+                exerciseCount: template.exerciseItems?.count ?? 0
             )
             
             Divider()
@@ -67,7 +67,7 @@ struct WorkoutTemplateDetailView: View {
             // Exercise list
             ScrollView {
                 ExerciseListView(
-                    exercises: template.exercises ?? [],
+                    exercises: template.exerciseItems ?? [],
                     onAddExercise: {
                         showExerciseSelector = true
                     },
@@ -84,7 +84,7 @@ struct WorkoutTemplateDetailView: View {
             
             // Bottom button
             StartWorkoutButtonView(
-                isDisabled: template.exercises?.isEmpty ?? true,
+                isDisabled: template.exerciseItems?.isEmpty ?? true,
                 onStartWorkout: {
                     let session = viewModel.startWorkout(with: template)
                     onStartWorkout(session)
@@ -134,7 +134,7 @@ struct WorkoutTemplateDetailView: View {
         .sheet(isPresented: $showExerciseSelector) {
             NavigationStack {
                 WorkoutSelectionView(
-                    initialSelection: template.exercises ?? []
+                    initialSelection: template.exerciseItems ?? []
                 ) { selectedExercises in
                     updateExercises(with: selectedExercises)
                     showExerciseSelector = false

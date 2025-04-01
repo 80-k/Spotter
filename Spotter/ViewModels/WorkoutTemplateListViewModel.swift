@@ -57,21 +57,21 @@ class WorkoutTemplateListViewModel {
     // 템플릿 삭제
     func deleteTemplate(_ template: WorkoutTemplate) {
         // 템플릿과 연결된 세션 관계 정리
-        if let sessions = template.sessions {
+        if let sessions = template.workoutSessions {
             for session in sessions {
                 // 세션과 연결된 세트들 삭제
-                if let sets = session.sets {
+                if let sets = session.workoutSets {
                     for set in sets {
                         modelContext.delete(set)
                     }
                 }
-                session.template = nil
+                session.workoutTemplate = nil
                 modelContext.delete(session)
             }
         }
         
         // 템플릿과 연결된 운동 관계 정리
-        if let exercises = template.exercises {
+        if let exercises = template.exerciseItems {
             for exercise in exercises {
                 exercise.workoutTemplates?.removeAll(where: { $0.id == template.id })
             }
@@ -104,36 +104,36 @@ class WorkoutTemplateListViewModel {
     
     // 템플릿으로 운동 세션 시작 - 개선된 버전
     func startWorkout(with template: WorkoutTemplate) -> WorkoutSession {
-        let session = WorkoutSession(template: template)
+        let session = WorkoutSession(workoutTemplate: template)
         
         // 세션 데이터베이스에 삽입
         modelContext.insert(session)
         
         // 템플릿의 각 운동에 대해 기본 세트 생성
-        template.exercises?.forEach { exercise in
+        template.exerciseItems?.forEach { exercise in
             // 이전 세션에서 세트 값 가져오기
             let previousSets = getPreviousSetValues(for: exercise, in: template)
             
             if !previousSets.isEmpty {
                 // 이전 세션의 세트 정보로 새 세트 생성
                 for setValues in previousSets {
-                    let newSet = session.addSet(for: exercise)
+                    let newSet = session.createSet(for: exercise)
                     newSet.weight = setValues.weight
                     newSet.reps = setValues.reps
                 }
             } else {
                 // 기본 세트 3개 추가
                 for _ in 0..<3 {
-                    _ = session.addSet(for: exercise)
+                    _ = session.createSet(for: exercise)
                 }
             }
         }
         
         // 템플릿에 세션 추가
-        if template.sessions == nil {
-            template.sessions = []
+        if template.workoutSessions == nil {
+            template.workoutSessions = []
         }
-        template.sessions?.append(session)
+        template.workoutSessions?.append(session)
         
         do {
             try modelContext.save()
@@ -147,7 +147,7 @@ class WorkoutTemplateListViewModel {
     // 이전 세션에서 특정 운동의 세트 정보 가져오기
     private func getPreviousSetValues(for exercise: ExerciseItem, in template: WorkoutTemplate) -> [(weight: Double, reps: Int)] {
         // 템플릿의 이전 세션 찾기
-        let previousSessions = template.sessions?.filter {
+        let previousSessions = template.workoutSessions?.filter {
             $0.endTime != nil
         }.sorted(by: {
             ($0.endTime ?? Date()) > ($1.endTime ?? Date())
@@ -159,8 +159,8 @@ class WorkoutTemplateListViewModel {
         }
         
         // 해당 운동의 세트 정보 가져오기
-        let setValues = latestSession.sets?.filter {
-            $0.exercise?.id == exercise.id && $0.weight > 0 && $0.reps > 0
+        let setValues = latestSession.workoutSets?.filter {
+            $0.exerciseItem?.id == exercise.id && $0.weight > 0 && $0.reps > 0
         }.map {
             (weight: $0.weight, reps: $0.reps)
         } ?? []

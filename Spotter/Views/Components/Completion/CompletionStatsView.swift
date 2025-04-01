@@ -22,7 +22,7 @@ struct CompletionStatsView: View {
     var body: some View {
         VStack(spacing: 24) {
             // 운동 이름
-            if let templateName = session.template?.name {
+            if let templateName = session.workoutTemplate?.name {
                 Text(templateName)
                     .font(.title2)
                     .fontWeight(.semibold)
@@ -32,7 +32,7 @@ struct CompletionStatsView: View {
             HStack(spacing: 24) {
                 // 총 운동 시간
                 StatItem(
-                    value: formatDuration(session.totalDuration ?? 0),
+                    value: formatDuration(session.duration ?? 0),
                     label: "총 시간"
                 )
                 
@@ -43,7 +43,7 @@ struct CompletionStatsView: View {
                 
                 // 총 세트 수
                 StatItem(
-                    value: "\(session.sets?.count ?? 0)",
+                    value: "\(session.workoutSets?.count ?? 0)",
                     label: "세트"
                 )
                 
@@ -53,7 +53,7 @@ struct CompletionStatsView: View {
                     .frame(width: 1, height: 40)
                 
                 // 운동 종류 수
-                let uniqueExercises = Set(session.sets?.compactMap { $0.exercise?.name } ?? [])
+                let uniqueExercises = Set(session.workoutSets?.compactMap { $0.exerciseItem?.name } ?? [])
                 StatItem(
                     value: "\(uniqueExercises.count)",
                     label: "운동"

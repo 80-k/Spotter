@@ -5,12 +5,13 @@
 import Foundation
 import SwiftData
 
+/// 운동 항목 모델
 @Model
 final class ExerciseItem {
     // 운동 기본 정보
     var name: String
     var muscleGroup: String
-    var exerciseDescription: String
+    var exerciseDescription: String // description -> exerciseDescription으로 다시 변경
     
     @Relationship(deleteRule: .cascade)
     var workoutTemplates: [WorkoutTemplate]? = []
@@ -20,16 +21,9 @@ final class ExerciseItem {
         self.muscleGroup = muscleGroup
         self.exerciseDescription = exerciseDescription
     }
-}
-
-// 운동 부위 enum
-enum MuscleGroup: String, CaseIterable, Codable {
-    case chest = "가슴"
-    case back = "등"
-    case legs = "하체"
-    case shoulders = "어깨"
-    case arms = "팔"
-    case core = "코어"
-    case cardio = "유산소"
-    case fullBody = "전신"
-}
+    
+    /// MuscleGroup 열거형 반환
+    var muscleGroupEnum: MuscleGroup? {
+        return MuscleGroup(rawValue: muscleGroup)
+    }
+} 

@@ -22,7 +22,7 @@ struct WorkoutSessionRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(session.template?.name ?? "운동 세션")
+                Text(session.workoutTemplate?.name ?? "운동 세션")
                     .font(.headline)
                 
                 Spacer()
@@ -44,7 +44,7 @@ struct WorkoutSessionRow: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             
-            if let sets = session.sets, !sets.isEmpty {
+            if let sets = session.workoutSets, !sets.isEmpty {
                 Text("\(sets.count) 세트 완료")
                     .font(.caption)
                     .foregroundColor(.secondary)

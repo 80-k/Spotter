@@ -17,7 +17,7 @@ struct TemplateRowView: View {
                 Text(template.name)
                     .font(.headline)
                 
-                if let exercises = template.exercises, !exercises.isEmpty {
+                if let exercises = template.exerciseItems, !exercises.isEmpty {
                     Text("\(exercises.count)개 운동")
                         .font(.subheadline)
                         .foregroundColor(.secondary)

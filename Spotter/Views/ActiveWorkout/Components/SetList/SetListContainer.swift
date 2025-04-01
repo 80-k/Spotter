@@ -42,7 +42,7 @@ struct SetListContainer: View {
                     } else {
                         // 일반 모드일 때 정적 세트 목록
                         StaticSetListView(
-                            sets: sets,
+                            sets: $sets,
                             viewModel: viewModel,
                             exercise: exercise,
                             isActive: isActive
@@ -56,5 +56,15 @@ struct SetListContainer: View {
         .padding(.horizontal, 8)
         // 높이 제한 제거 - 자동으로 콘텐츠에 맞게 조정
         .frame(minHeight: sets.isEmpty ? 60 : nil)
+    }
+    
+    // 세트 순서 업데이트
+    private func updateSetsOrder(_ updatedSets: [WorkoutSet]) {
+        for (idx, setItem) in updatedSets.enumerated() {
+            setItem.order = idx + 1
+        }
+        
+        // 변경 사항 저장
+        try? viewModel.modelContext.save()
     }
 }

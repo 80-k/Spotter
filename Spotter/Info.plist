@@ -11,5 +11,17 @@
 			<string></string>
 		</dict>
 	</array>
+	
+	<!-- Live Activity 지원 설정 -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
+	
+	<!-- 푸시 알림 지원 -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

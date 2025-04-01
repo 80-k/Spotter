@@ -1,31 +1,47 @@
 // WorkoutActivityAttributes.swift
-// 다이나믹 아일랜드 LiveActivity 속성 정의
-// Created by woo on 3/30/25.
+// 운동 라이브 액티비티 속성 정의
+//  Created by woo on 3/30/25.
 
 import Foundation
 import ActivityKit
 
-// 운동 활동 속성 정의
-public struct WorkoutActivityAttributes: ActivityAttributes {
+/// 운동 라이브 액티비티에 사용되는 속성
+struct WorkoutActivityAttributes: ActivityAttributes {
+    /// 라이브 액티비티를 식별하기 위한 운동명
+    public let workoutName: String
+    
+    /// 라이브 액티비티 콘텐츠 상태
     public struct ContentState: Codable, Hashable {
-        public var startTime: Date
-        public var elapsedTime: TimeInterval
-        public var isRestTimer: Bool
-        public var restExerciseName: String
-        public var restTimeRemaining: Int
+        /// 운동 시작 시간
+        var startTime: Date
         
-        public init(startTime: Date, elapsedTime: TimeInterval, isRestTimer: Bool, restExerciseName: String, restTimeRemaining: Int) {
-            self.startTime = startTime
-            self.elapsedTime = elapsedTime
-            self.isRestTimer = isRestTimer
-            self.restExerciseName = restExerciseName
-            self.restTimeRemaining = restTimeRemaining
+        /// 운동에 포함된 운동 항목 수
+        var exerciseCount: Int
+        
+        /// 완료된 세트 수
+        var completedSets: Int
+        
+        /// 전체 세트 수
+        var totalSets: Int
+        
+        /// 휴식 모드 여부
+        var isRestMode: Bool = false
+        
+        /// 휴식 중인 운동의 이름
+        var restExerciseName: String = ""
+        
+        /// 남은 휴식 시간 (초)
+        var remainingRestTime: Int = 0
+        
+        /// 경과 시간 (초)
+        var elapsedSeconds: Int {
+            return Int(Date().timeIntervalSince(startTime))
+        }
+        
+        /// 진행률 (0.0 ~ 1.0)
+        var progressPercentage: Float {
+            guard totalSets > 0 else { return 0.0 }
+            return Float(completedSets) / Float(totalSets)
         }
     }
-    
-    public var workoutName: String
-    
-    public init(workoutName: String) {
-        self.workoutName = workoutName
-    }
-}
+} 

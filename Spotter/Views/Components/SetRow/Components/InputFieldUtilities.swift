@@ -7,7 +7,7 @@ import SwiftUI
 // 무게 값 포맷팅 헬퍼 함수
 func formatWeightValue(_ weight: Double) -> String {
     if weight <= 0 {
-        return "0"
+        return ""
     }
     
     // 소수점 이하가 0인지 확인 (정수인지)

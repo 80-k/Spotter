@@ -98,15 +98,3 @@ class AppStateManager: ObservableObject {
         return foregroundTime.timeIntervalSince(backgroundTime)
     }
 }
-
-// SwiftUI 뷰에서 쉽게 사용할 수 있는 환경 키
-struct AppStateKey: EnvironmentKey {
-    static let defaultValue = AppStateManager.shared
-}
-
-extension EnvironmentValues {
-    var appState: AppStateManager {
-        get { self[AppStateKey.self] }
-        set { self[AppStateKey.self] = newValue }
-    }
-}

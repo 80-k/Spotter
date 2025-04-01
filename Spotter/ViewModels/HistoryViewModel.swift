@@ -94,9 +94,7 @@ class HistoryViewModel: ObservableObject {
         totalWorkouts = sessions.count
         
         // 총 운동 시간
-        totalDuration = sessions.reduce(0) { sum, session in
-            sum + (session.totalDuration ?? 0)
-        }
+        totalDuration = sessions.reduce(0.0) { $0 + ($1.duration ?? 0.0) }
         
         // 평균 운동 시간
         if totalWorkouts > 0 {
@@ -192,8 +190,8 @@ class HistoryViewModel: ObservableObject {
             }
             
             // 새로운 방식: 세션 삭제 전에 참조 제거
-            sessionToDelete.template = nil
-            sessionToDelete.sets = []
+            sessionToDelete.workoutTemplate = nil
+            sessionToDelete.workoutSets = []
             
             // 메모리에서 삭제된 세션 제거 (새로운 배열 생성)
             self.sessions = self.sessions.filter { $0.id != sessionId }
@@ -224,30 +222,30 @@ class HistoryViewModel: ObservableObject {
         }
         
         // 안전하게 세션 데이터 복사
-        guard let sessionSets = completedSession.sets?.compactMap({ $0 }) else {
+        guard let sessionSets = completedSession.workoutSets?.compactMap({ $0 }) else {
             print("세션에 세트가 없습니다.")
             return nil
         }
         
         // 템플릿 처리
         var template: WorkoutTemplate
-        if let existingTemplate = completedSession.template {
+        if let existingTemplate = completedSession.workoutTemplate {
             // 기존 템플릿의 새 인스턴스 생성 (안전한 참조를 위해)
             template = WorkoutTemplate(name: existingTemplate.name)
-            template.exercises = existingTemplate.exercises
+            template.exerciseItems = existingTemplate.exerciseItems
             modelContext.insert(template)
         } else {
             template = createTemplateFromSession(completedSession)
         }
         
         // 새 세션 생성
-        let newSession = WorkoutSession(template: template)
+        let newSession = WorkoutSession(workoutTemplate: template)
         modelContext.insert(newSession)
         
         // 운동별 세트 그룹화
         var exerciseSets: [PersistentIdentifier: [WorkoutSet]] = [:]
         for set in sessionSets {
-            guard let exercise = set.exercise else { continue }
+            guard let exercise = set.exerciseItem else { continue }
             if exerciseSets[exercise.id] == nil {
                 exerciseSets[exercise.id] = []
             }
@@ -255,14 +253,14 @@ class HistoryViewModel: ObservableObject {
         }
         
         // 새 세션에 세트 추가
-        if let exercises = template.exercises {
+        if let exercises = template.exerciseItems {
             for exercise in exercises {
                 let completedSets = exerciseSets[exercise.id] ?? []
                 let setCount = max(completedSets.count + 1, 3) // 최소 3개, 완료된 세트 수 + 1
                 
                 // 세트 추가
                 for i in 0..<setCount {
-                    let newSet = newSession.addSet(for: exercise)
+                    let newSet = newSession.createSet(for: exercise)
                     
                     // 이전 세트 정보가 있으면 복사 (무게, 반복 횟수 등)
                     if i < completedSets.count {
@@ -287,21 +285,21 @@ class HistoryViewModel: ObservableObject {
     
     // 완료된 세션에서 템플릿 생성
     private func createTemplateFromSession(_ session: WorkoutSession) -> WorkoutTemplate {
-        let templateName = session.template?.name ?? "재개한 운동"
+        let templateName = session.workoutTemplate?.name ?? "재개한 운동"
         let template = WorkoutTemplate(name: templateName)
         
         // 세션에서 운동 추출
-        if let sets = session.sets {
+        if let sets = session.workoutSets {
             var exerciseDict: [PersistentIdentifier: ExerciseItem] = [:]
             
             for set in sets {
-                if let exercise = set.exercise, exerciseDict[exercise.id] == nil {
+                if let exercise = set.exerciseItem, exerciseDict[exercise.id] == nil {
                     exerciseDict[exercise.id] = exercise
                 }
             }
             
             // 템플릿에 운동 추가
-            template.exercises = Array(exerciseDict.values)
+            template.exerciseItems = Array(exerciseDict.values)
         }
         
         modelContext.insert(template)

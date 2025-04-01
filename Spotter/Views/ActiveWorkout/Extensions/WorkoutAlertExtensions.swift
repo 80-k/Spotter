@@ -18,12 +18,8 @@ extension View {
             .alert("운동 완료", isPresented: showCompletionAlert) {
                 Button("취소", role: .cancel) { }
                 Button("완료", role: .destructive) {
-                    let success = viewModel.completeWorkout()
-                    if success {
-                        onWorkoutCompleted(viewModel.currentSession)
-                    } else {
-                        onWorkoutCancelled()
-                    }
+                    viewModel.completeWorkout()
+                    onWorkoutCompleted(viewModel.currentSession)
                 }
             } message: {
                 Text("현재 운동을 완료하시겠습니까?")
@@ -33,7 +29,7 @@ extension View {
             .alert("운동 취소", isPresented: showCancelAlert) {
                 Button("아니오", role: .cancel) { }
                 Button("예", role: .destructive) {
-                    LiveActivityManager.shared.endActivity()
+                    LiveActivityService.shared.endActivity()
                     onWorkoutCancelled()
                 }
             } message: {
