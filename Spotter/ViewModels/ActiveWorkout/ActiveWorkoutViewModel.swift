@@ -58,9 +58,6 @@ class ActiveWorkoutViewModel {
     // LiveActivity와의 통합을 위한 참조
     private let liveActivityManager = LiveActivityManager.shared
     
-    // LiveActivity에 경과 시간 업데이트 (1초 간격)
-    private var liveActivityTimer: Timer?
-    
     init(modelContext: ModelContext, session: WorkoutSession) {
         self.modelContext = modelContext
         self.currentSession = session
@@ -70,18 +67,8 @@ class ActiveWorkoutViewModel {
             self.exercises = templateExercises
         }
 
-        // 이전 세션 상태 복원
-        self.restoreSessionState()
-        
-        // LiveActivity 시작
-        if let workoutTemplate = session.template {
-            liveActivityManager.startWorkoutActivity(workoutName: workoutTemplate.name)
-        } else {
-            liveActivityManager.startWorkoutActivity(workoutName: "커스텀 운동")
-        }
-        
-        // LiveActivity 업데이트 타이머 시작
-        setupLiveActivityTimer()
+        // 타이머 시작
+        startTimer()
     }
     
     deinit {
@@ -96,10 +83,6 @@ class ActiveWorkoutViewModel {
         
         // LiveActivity 종료
         liveActivityManager.endActivity()
-        
-        // 타이머 정리
-        liveActivityTimer?.invalidate()
-        liveActivityTimer = nil
         
         print("ActiveWorkoutViewModel 리소스 정리 완료")
     }
@@ -574,18 +557,6 @@ class ActiveWorkoutViewModel {
             print("완료된 운동에 새 세트 추가됨: \(exercise.name)")
         } catch {
             print("세트 추가 중 오류 발생: \(error)")
-        }
-    }
-
-    // LiveActivity에 경과 시간 업데이트 (1초 간격)
-    private func setupLiveActivityTimer() {
-        liveActivityTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self, self.isActive else { return }
-            
-            // 활성 타이머가 없는 경우에만 LiveActivity 업데이트
-            if !self.restTimerActive {
-                self.liveActivityManager.updateWorkoutTime()
-            }
         }
     }
 }

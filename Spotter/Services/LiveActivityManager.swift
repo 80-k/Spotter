@@ -29,14 +29,13 @@ class LiveActivityManager {
     private var lastRestUpdateTime: Date = Date()
     
     // 업데이트 제한 간격 (초) - 모드 전환에는 더 짧은 간격 적용
-    private let regularUpdateInterval: TimeInterval = 0.3  // 일반 업데이트 - 더 빠른 업데이트를 위해 0.5 -> 0.3으로 줄임
+    private let regularUpdateInterval: TimeInterval = 0.5  // 일반 업데이트
     private let transitionUpdateInterval: TimeInterval = 0.1  // 모드 전환용
     
     // 운동 세부 정보 저장
     private var workoutName: String = ""
     private var workoutStartTime: Date = Date()
     private var restExerciseName: String = ""
-    private var lastElapsedTime: TimeInterval = 0  // 마지막으로 기록된 경과 시간
     
     // 마지막 휴식 타이머 값 (0이 되었을 때 중복 호출 방지)
     private var lastRestTimeValue: Int = -1
@@ -325,35 +324,23 @@ class LiveActivityManager {
     }
     
     // 운동 시간 업데이트 - 최적화된 버전
-    func updateWorkoutTime(elapsedTime: TimeInterval? = nil) {
+    func updateElapsedTime() {
         guard let activity = currentActivity else { return }
         
-        // 이미 휴식 타이머 모드면 변경 필요 없음
+        // 휴식 타이머 모드면 업데이트 무시
         if currentMode == .restTimer {
             return
         }
         
-        // 업데이트 제한 (너무 빠른 연속 업데이트 방지)
+        // 업데이트 제한 (초당 2회 이상 방지)
         let now = Date()
         if now.timeIntervalSince(lastWorkoutUpdateTime) < regularUpdateInterval {
             return
         }
         
-        // 경과 시간 계산
-        let calculatedElapsedTime = elapsedTime ?? now.timeIntervalSince(workoutStartTime)
-        
-        // 이전 업데이트와 같은 시간이라면 업데이트하지 않음
-        // 하지만 1초 이상 차이가 나면 강제 업데이트 (동기화 오차 방지)
-        if abs(calculatedElapsedTime - lastElapsedTime) < 1.0 {
-            return
-        }
-        
-        // 시간 저장
-        lastElapsedTime = calculatedElapsedTime
-        
         let updatedState = WorkoutActivityAttributes.ContentState(
             startTime: workoutStartTime,
-            elapsedTime: calculatedElapsedTime,
+            elapsedTime: Date().timeIntervalSince(workoutStartTime),
             isRestTimer: false,
             restExerciseName: "",
             restTimeRemaining: 0
@@ -363,8 +350,14 @@ class LiveActivityManager {
         
         Task {
             await activity.update(updatedContent)
-            currentMode = .workout
-            lastWorkoutUpdateTime = now
+            
+            // 모드 확인 및 설정
+            if currentMode != .workout {
+                currentMode = .workout
+                print("모드 업데이트: 운동 모드")
+            }
+            
+            lastWorkoutUpdateTime = Date()
         }
     }
     

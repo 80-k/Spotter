@@ -99,6 +99,12 @@ struct HistoryListView: View {
             }
             .navigationTitle("운동 기록")
             .background(backgroundColor)
+            .toolbar {
+                // 테마 토글 버튼 추가
+                ToolbarItem(placement: .topBarTrailing) {
+                    CompactThemeToggleButton()
+                }
+            }
             .sheet(isPresented: $showingCalendarView) {
                 CalendarView(viewModel: viewModel)
             }
