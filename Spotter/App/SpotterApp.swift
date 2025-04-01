@@ -25,6 +25,9 @@ struct SpotterApp: App {
     // 모델 컨테이너
     private let swiftDataManager = SwiftDataManager.shared
     
+    // 휴식 타이머 서비스 참조 추가
+    private let restTimerService = RestTimerService.shared
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -47,12 +50,40 @@ struct SpotterApp: App {
             .onChange(of: scenePhase) { _, newPhase in
                 appStateService.updateScenePhase(newPhase)
                 
-                // 앱이 백그라운드로 전환될 때 LiveActivity 처리 (직접 호출 대신 NotificationCenter 이벤트 사용)
+                // 앱이 백그라운드로 전환될 때 LiveActivity 처리
                 if newPhase == .background {
                     print("SpotterApp: 백그라운드 전환 감지")
                     LiveActivityService.shared.handleAppBackgroundTransition()
+                    
+                    // 백그라운드 전환 시 휴식 타이머 상태 처리
+                    restTimerService.handleAppBackgrounded()
+                } else if newPhase == .active {
+                    // 포그라운드로 돌아올 때 처리
+                    restTimerService.handleAppForegrounded()
                 }
             }
+            .onAppear {
+                // 앱 상태 콜백 설정 - 뷰가 나타난 후 실행
+                setupAppStateCallbacks()
+            }
+        }
+    }
+    
+    // 앱 상태 콜백 설정
+    private func setupAppStateCallbacks() {
+        // 앱 상태 서비스가 초기화된 후에만 콜백 설정
+        // 앱이 백그라운드로 전환될 때 콜백
+        appStateService.onBackgrounded = {
+            print("SpotterApp: 백그라운드 콜백 실행")
+            // 휴식 타이머 백그라운드 처리
+            RestTimerService.shared.handleAppBackgrounded()
+        }
+        
+        // 앱이 포그라운드로 돌아올 때 콜백
+        appStateService.onForegrounded = {
+            print("SpotterApp: 포그라운드 콜백 실행")
+            // 휴식 타이머 포그라운드 처리
+            RestTimerService.shared.handleAppForegrounded()
         }
     }
 } 

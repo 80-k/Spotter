@@ -8,7 +8,7 @@ import SwiftUI
 import Combine
 
 @Observable
-class ActiveWorkoutViewModel {
+class ActiveWorkoutViewModel: WorkoutViewModelManageable {
     // 데이터 모델 컨텍스트 - internal로 변경하여 외부에서 접근 가능하도록 함
     var modelContext: ModelContext
     
@@ -94,6 +94,9 @@ class ActiveWorkoutViewModel {
         // 높은 우선순위로 타이머 초기화
         let timerInterval: TimeInterval = 0.5 // 0.5초 간격으로 업데이트하여 정확도 향상
         
+        // 기존 타이머가 있다면 정리
+        stopTimer()
+        
         // RunLoop에 추가하여 앱이 활성화된 상태에서 더 정확하게 작동하도록 함
         timer = Timer(timeInterval: timerInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -112,6 +115,66 @@ class ActiveWorkoutViewModel {
         // RunLoop에 타이머 추가
         if let timer = timer {
             RunLoop.main.add(timer, forMode: .common)
+        }
+    }
+    
+    // 타이머 중지 메서드 추가
+    public func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+        print("운동 시간 타이머 중지됨")
+    }
+    
+    // MARK: - WorkoutViewModelManageable 프로토콜 구현
+    
+    // 앱 상태 변경 처리 메서드 추가
+    public func handleAppStateChange(toBackground: Bool) {
+        if toBackground {
+            // 백그라운드로 전환 시 처리
+            print("ActiveWorkoutViewModel: 백그라운드 전환 감지")
+            handleAppBackgrounded()
+        } else {
+            // 포그라운드로 복귀 시 처리
+            print("ActiveWorkoutViewModel: 포그라운드 복귀 감지")
+            handleAppForegrounded()
+        }
+    }
+    
+    // 앱이 백그라운드로 전환될 때 호출
+    public func handleAppBackgrounded() {
+        print("ActiveWorkoutViewModel: 백그라운드 처리 시작")
+        
+        // 휴식 타이머가 활성 상태가 아니라면 운동 타이머도 정리
+        if !restTimerActive {
+            stopTimer()
+        }
+        
+        // 라이브 액티비티 서비스에 백그라운드 전환 알림
+        if restTimerActive, let set = currentActiveSet {
+            // 휴식 타이머가 활성화된 경우
+            liveActivityService.updateRestTimerActivity(for: set)
+        } else {
+            // 운동 모드인 경우
+            liveActivityService.updateWorkoutActivity(for: currentSession)
+        }
+    }
+    
+    // 앱이 포그라운드로 돌아올 때 호출
+    public func handleAppForegrounded() {
+        print("ActiveWorkoutViewModel: 포그라운드 처리 시작")
+        
+        // 운동 타이머가 없다면 재시작
+        if timer == nil && !restTimerActive {
+            startTimer()
+        }
+        
+        // 라이브 액티비티 서비스에 포그라운드 전환 알림
+        if restTimerActive, let set = currentActiveSet {
+            // 휴식 타이머가 활성화된 경우
+            liveActivityService.updateRestTimerActivity(for: set)
+        } else {
+            // 운동 모드인 경우
+            liveActivityService.updateWorkoutActivity(for: currentSession)
         }
     }
     
@@ -432,18 +495,6 @@ class ActiveWorkoutViewModel {
     
     // MARK: - 앱 상태 관리 (스켈레톤 메서드)
     
-    // 앱이 백그라운드로 전환될 때 호출될 메서드
-    func handleAppBackgrounded() {
-        restTimerService.handleAppBackgrounded()
-    }
-    
-    // 앱이 포그라운드로 돌아올 때 호출될 메서드
-    func handleAppForegrounded() {
-        restTimerService.handleAppForegrounded()
-    }
-    
-    
-
     // 동시에 여러 운동을 추가하는 배치 메서드 (선택적으로 추가)
     func batchAddExercisesToWorkout(_ exercises: [ExerciseItem]) {
         var addedCount = 0

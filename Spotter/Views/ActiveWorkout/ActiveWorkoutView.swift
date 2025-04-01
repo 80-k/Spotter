@@ -85,13 +85,13 @@ struct ActiveWorkoutView: View {
             // 라이프사이클 및 앱 상태 관리
             .onAppear {
                 setupLiveActivity()
-                setupAppStateCallbacks()
+                registerViewModel()
             }
             .onDisappear {
-                clearAppStateCallbacks()
+                unregisterViewModel()
             }
             .onChange(of: scenePhase) { _, newPhase in
-                appStateService.updateScenePhase(newPhase)
+                handleScenePhaseChange(newPhase)
             }
         }
     }
@@ -129,20 +129,32 @@ struct ActiveWorkoutView: View {
         }
     }
     
-    // 앱 상태 콜백 설정
-    private func setupAppStateCallbacks() {
-        appStateService.onBackgrounded = { [weak viewModel] in
-            viewModel?.handleAppBackgrounded()
-        }
-        
-        appStateService.onForegrounded = { [weak viewModel] in
-            viewModel?.handleAppForegrounded()
-        }
+    // 뷰모델 등록
+    private func registerViewModel() {
+        // 앱 상태 서비스에 뷰모델 등록
+        appStateService.registerActiveWorkoutViewModel(viewModel)
+        print("ActiveWorkoutView: 뷰모델 등록됨")
     }
     
-    // 앱 상태 콜백 제거
-    private func clearAppStateCallbacks() {
-        appStateService.onBackgrounded = nil
-        appStateService.onForegrounded = nil
+    // 뷰모델 등록 해제
+    private func unregisterViewModel() {
+        // 앱 상태 서비스에서 뷰모델 등록 해제
+        appStateService.unregisterActiveWorkoutViewModel()
+        print("ActiveWorkoutView: 뷰모델 등록 해제됨")
+    }
+    
+    // 씬 단계 변경 처리
+    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        print("ActiveWorkoutView: 씬 단계 변경 - \(newPhase)")
+        
+        // 뷰모델에 상태 변경 알림
+        if newPhase == .background {
+            viewModel.handleAppStateChange(toBackground: true)
+        } else if newPhase == .active {
+            viewModel.handleAppStateChange(toBackground: false)
+        }
+        
+        // 앱 상태 서비스에도 알림
+        appStateService.updateScenePhase(newPhase)
     }
 }
