@@ -8,10 +8,10 @@ import SwiftUI
 import AuthenticationServices
 
 struct SettingsView: View {
-    // 테마 관리자
-    @Environment(\.themeManager) private var themeManager
+    // 테마 서비스 사용
+    @Environment(\.themeService) private var themeService
     // 선택된 테마를 위한 상태 변수
-    @State private var selectedTheme: AppTheme = .system
+    @State private var selectedTheme: ThemeType = .system
     
     // 통합 인증 관리자
     @ObservedObject private var authManager = AuthManager.shared
@@ -103,20 +103,19 @@ struct SettingsView: View {
                 Section(header: Text("테마 설정")) {
                     // 테마 픽커
                     Picker("테마", selection: $selectedTheme) {
-                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                        ForEach(ThemeType.allCases, id: \.self) { theme in
                             HStack {
-                                Image(systemName: theme.icon)
+                                Image(systemName: theme.iconName)
                                     .foregroundColor(themeIconColor(for: theme))
-                                Text(theme.name)
+                                Text(theme.rawValue)
                             }
                             .tag(theme)
                         }
                     }
                     .pickerStyle(.navigationLink)
                     .onChange(of: selectedTheme) { _, newValue in
-                        themeManager.setTheme(newValue)
+                        themeService.setTheme(newValue)
                     }
-                    
                 }
                 
                 // 동기화 및 백업 섹션 (로그인 시만 표시)
@@ -178,7 +177,7 @@ struct SettingsView: View {
             .navigationTitle("설정")
             .onAppear {
                 // 뷰가 나타날 때 현재 테마 로드
-                selectedTheme = themeManager.currentTheme
+                selectedTheme = themeService.currentTheme
             }
             .sheet(isPresented: $showingProfileView) {
                 UserProfileView()
@@ -194,7 +193,7 @@ struct SettingsView: View {
     }
     
     // 테마 아이콘 색상
-    private func themeIconColor(for theme: AppTheme) -> Color {
+    private func themeIconColor(for theme: ThemeType) -> Color {
         switch theme {
         case .system:
             return .blue

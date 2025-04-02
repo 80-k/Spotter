@@ -5,8 +5,8 @@
 import SwiftUI
 
 struct ThemeToggleButton: View {
-    // Environment에서 ThemeManager 가져오기
-    @Environment(\.themeManager) private var themeManager
+    // Environment에서 ThemeService 가져오기
+    @Environment(\.themeService) private var themeService
     
     // 버튼 크기
     var size: CGFloat = 24
@@ -16,19 +16,19 @@ struct ThemeToggleButton: View {
         Button(action: {
             // 다음 테마로 순환
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                themeManager.cycleTheme()
+                cycleTheme()
             }
         }) {
             HStack(spacing: 8) {
                 // 현재 테마 아이콘
-                Image(systemName: themeManager.currentTheme.icon)
+                Image(systemName: themeService.currentTheme.iconName)
                     .font(.system(size: size))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(iconColor)
                 
                 // 테마 이름 (옵션)
                 if showText {
-                    Text(themeManager.currentTheme.name)
+                    Text(themeService.currentTheme.rawValue)
                         .font(.footnote)
                         .bold()
                 }
@@ -41,9 +41,17 @@ struct ThemeToggleButton: View {
         }
     }
     
+    // 테마 순환 메서드
+    private func cycleTheme() {
+        let themes = ThemeType.allCases
+        let currentIndex = themes.firstIndex(of: themeService.currentTheme) ?? 0
+        let nextIndex = (currentIndex + 1) % themes.count
+        themeService.setTheme(themes[nextIndex])
+    }
+    
     // 아이콘 색상
     private var iconColor: Color {
-        switch themeManager.currentTheme {
+        switch themeService.currentTheme {
         case .system:
             return .blue
         case .light:
@@ -55,7 +63,7 @@ struct ThemeToggleButton: View {
     
     // 배경 색상
     private var backgroundColor: Color {
-        switch themeManager.currentTheme {
+        switch themeService.currentTheme {
         case .system:
             return .blue.opacity(0.1)
         case .light:

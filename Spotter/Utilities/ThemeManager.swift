@@ -1,9 +1,12 @@
 // ThemeManager.swift
 // 앱 테마(다크모드/라이트모드) 관리
 // Created by woo on 3/30/25.
+// 참고: 이 파일은 더 이상 사용되지 않으며 ThemeService.swift로 대체되었습니다.
+// 호환성을 위해 유지되고 있으나 새로운 기능은 ThemeService를 사용해야 합니다.
 
 import SwiftUI
 
+/*
 // 앱 테마 열거형
 enum AppTheme: Int, CaseIterable {
     case system   // 시스템 설정 따름
@@ -98,3 +101,4 @@ extension EnvironmentValues {
         set { self[ThemeManagerKey.self] = newValue }
     }
 }
+*/

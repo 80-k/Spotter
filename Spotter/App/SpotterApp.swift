@@ -34,9 +34,6 @@ struct SpotterApp: App {
     // 백그라운드 진입 시간 추적
     @State private var backgroundEntryTime: Date? = nil
     
-    // 백그라운드 타임아웃 (10초 후 LiveActivity 종료)
-    private let backgroundTimeout: TimeInterval = 10
-    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -104,29 +101,6 @@ struct SpotterApp: App {
         
         // 휴식 타이머 처리
         restTimerService.handleAppBackgrounded()
-        
-        // 일정 시간 후 LiveActivity 종료를 위한 백그라운드 작업 예약
-        Task {
-            do {
-                // 10초 동안 대기 (앱이 종료되었다고 간주할 시간)
-                try await Task.sleep(for: .seconds(backgroundTimeout))
-                
-                // 앱이 여전히 백그라운드 상태이고 충분한 시간이 지났다면 LiveActivity 종료
-                if scenePhase == .background, 
-                   let entryTime = backgroundEntryTime,
-                   Date().timeIntervalSince(entryTime) >= backgroundTimeout {
-                    print("SpotterApp: 장시간 백그라운드 상태로 LiveActivity 종료")
-                    
-                    // LiveActivity 완전히 종료
-                    LiveActivityService.shared.endAllActivities()
-                    
-                    // 휴식 타이머 정리
-                    restTimerService.stopTimer()
-                }
-            } catch {
-                print("백그라운드 작업 오류: \(error)")
-            }
-        }
     }
     
     // 앱이 포그라운드로 돌아올 때 호출
