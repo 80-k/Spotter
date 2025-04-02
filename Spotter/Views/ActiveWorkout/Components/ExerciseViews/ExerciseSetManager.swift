@@ -45,21 +45,17 @@ class ExerciseSetManagerImpl: ExerciseSetManagement {
     
     /// 세트 로드
     func loadSets() -> [WorkoutSet] {
-        print("세트 로드 중... 운동: \(exercise.name)")
         let loadedSets = viewModel.getSetsForExercise(exercise)
         
         if loadedSets.isEmpty {
             // 세트가 없으면 하나 추가 후 다시 로드
-            print("세트가 없어 새로 추가합니다.")
             let newSet = viewModel.addSet(for: exercise)
-            print("새 세트 추가 완료: \(newSet.id)")
             
             // 세트를 추가한 후 목록 다시 로드
             let updatedSets = viewModel.getSetsForExercise(exercise)
             
             if updatedSets.isEmpty {
                 // 여전히 세트가 없다면 로컬 배열에 직접 추가
-                print("경고: 세트 추가 후에도 세트 목록이 비어 있습니다. 수동으로 추가합니다.")
                 return [newSet]
             } else {
                 return updatedSets

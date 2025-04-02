@@ -50,11 +50,9 @@ struct WorkoutHistoryTabView: View {
             .navigationTitle("운동 기록")
             // 운동 완료 알림 수신 시 기록 새로고침
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("WorkoutCompleted"))) { _ in
-                print("운동 완료 알림 수신")
                 viewModel.fetchSessions()
             }
             .onAppear {
-                print("기록 탭 나타남")
                 viewModel.fetchSessions()
             }
             .refreshable {

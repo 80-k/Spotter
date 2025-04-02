@@ -35,10 +35,9 @@ class HistoryViewModel: ObservableObject {
         fetchSessions()
     }
     
-    // 모든 세션 가져오기 - 개선된 버전
+    // 모든 세션 가져오기
     func fetchSessions() {
         do {
-            print("세션 가져오기 시작")
             let descriptor = FetchDescriptor<WorkoutSession>(
                 predicate: #Predicate { session in
                     session.endTime != nil
@@ -46,12 +45,6 @@ class HistoryViewModel: ObservableObject {
                 sortBy: [SortDescriptor(\.startTime, order: .reverse)]
             )
             sessions = try modelContext.fetch(descriptor)
-            print("가져온 세션 수: \(sessions.count)")
-            
-            // 세션 정보 로깅
-            for (index, session) in sessions.enumerated() {
-                print("세션 \(index): 시작=\(session.startTime), 종료=\(session.endTime ?? Date())")
-            }
             
             // 날짜별 세션 정리
             updateSessionsByDate()
@@ -80,11 +73,6 @@ class HistoryViewModel: ObservableObject {
                     sessionsByDate[date]?.append(session)
                 }
             }
-        }
-        
-        // 날짜별 세션 로깅
-        for (date, dateSessions) in sessionsByDate {
-            print("날짜 \(date): 세션 \(dateSessions.count)개")
         }
     }
     
@@ -173,7 +161,7 @@ class HistoryViewModel: ObservableObject {
         return !sessionsForDate(date).isEmpty
     }
     
-    // 세션 삭제 - 완전히 새로운 방식으로 구현 (EXC_BAD_ACCESS 오류 해결)
+    // 세션 삭제
     func deleteSession(_ session: WorkoutSession) {
         // 세션 ID 저장 (안전한 참조를 위해)
         let sessionId = session.id
@@ -189,11 +177,11 @@ class HistoryViewModel: ObservableObject {
                 return
             }
             
-            // 새로운 방식: 세션 삭제 전에 참조 제거
+            // 세션 삭제 전에 참조 제거
             sessionToDelete.workoutTemplate = nil
             sessionToDelete.workoutSets = []
             
-            // 메모리에서 삭제된 세션 제거 (새로운 배열 생성)
+            // 메모리에서 삭제된 세션 제거
             self.sessions = self.sessions.filter { $0.id != sessionId }
             
             // 세션 삭제
@@ -201,7 +189,6 @@ class HistoryViewModel: ObservableObject {
             
             do {
                 try self.modelContext.save()
-                print("세션이 성공적으로 삭제되었습니다.")
                 
                 // 세션 목록 새로고침 (안전하게 다시 가져오기)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -213,7 +200,7 @@ class HistoryViewModel: ObservableObject {
         }
     }
     
-    // 완료된 운동을 다시 활성화하여 새 세션 생성 - 개선된 버전
+    // 완료된 운동을 다시 활성화하여 새 세션 생성
     func reactivateSession(_ completedSession: WorkoutSession) -> WorkoutSession? {
         // 완료되지 않은 세션이면 무시
         guard completedSession.endTime != nil else {
@@ -275,7 +262,6 @@ class HistoryViewModel: ObservableObject {
         
         do {
             try modelContext.save()
-            print("완료된 운동을 다시 활성화하였습니다.")
             return newSession
         } catch {
             print("세션 다시 활성화 중 오류 발생: \(error)")

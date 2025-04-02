@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+// CalendarView 전체는 SessionHistoryView로 기능이 통합되어 
+// 사용되지 않는 것으로 보입니다. CalendarGridView만 유지합니다.
+// 이전 코드는 주석 처리하여 필요시 참조할 수 있도록 합니다.
+
+/*
 struct CalendarView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: HistoryViewModel
@@ -62,6 +67,7 @@ struct CalendarView: View {
         }
     }
 }
+*/
 
 struct CalendarGridView: View {
     let viewModel: HistoryViewModel

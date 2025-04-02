@@ -129,8 +129,8 @@ class DataSyncManager: ObservableObject {
     
     // 네트워크 상태 확인 - SwiftUI 방식으로 대체
     private func setupNetworkCheck() {
-        // 실제 구현시 적절한 네트워크 연결 확인 로직 추가
-        // 이 예제에서는 단순화를 위해 항상 온라인으로 가정
+        // TODO: 실제 구현 시 적절한 네트워크 연결 확인 로직 추가
+        // 현재는 단순화를 위해 항상 온라인으로 가정
         isOnline = true
     }
     
@@ -246,8 +246,8 @@ class DataSyncManager: ObservableObject {
     
     // 원격 변경사항 확인
     private func checkRemoteChanges(userId: String, completion: @escaping (Bool) -> Void) {
-        // 원격 저장소(Firebase 등)에서 마지막 동기화 이후 변경된 데이터 확인
-        // 테스트용 더미 구현
+        // TODO: 원격 저장소(Firebase 등)에서 마지막 동기화 이후 변경된 데이터 확인
+        // 현재는 테스트용 더미 구현
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
             let hasChanges = Bool.random()
             completion(hasChanges)
@@ -256,8 +256,8 @@ class DataSyncManager: ObservableObject {
     
     // 로컬 변경사항 확인
     private func checkLocalChanges(userId: String, completion: @escaping (Bool) -> Void) {
-        // SwiftData에서 마지막 동기화 이후 변경된 데이터 확인
-        // 테스트용 더미 구현
+        // TODO: SwiftData에서 마지막 동기화 이후 변경된 데이터 확인
+        // 현재는 테스트용 더미 구현
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
             let hasChanges = Bool.random()
             completion(hasChanges)
@@ -266,8 +266,8 @@ class DataSyncManager: ObservableObject {
     
     // 데이터 병합 수행
     private func performDataMerge(userId: String, completion: @escaping (Bool) -> Void) {
-        // 로컬 및 원격 데이터 병합 수행
-        // 테스트용 더미 구현
+        // TODO: 로컬 및 원격 데이터 병합 수행
+        // 현재는 테스트용 더미 구현
         DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
             let success = true
             completion(success)

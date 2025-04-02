@@ -68,9 +68,9 @@ struct SessionHistoryView: View {
                                     }) {
                                         WorkoutSessionRow(session: session)
                                             .padding()
-                                            .background(cardBackgroundColor)
+                                            .background(ThemeColor.cardBackgroundColor(colorScheme: colorScheme))
                                             .cornerRadius(12)
-                                            .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                                            .shadow(color: ThemeColor.shadowColor(colorScheme: colorScheme), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     .padding(.horizontal)
@@ -95,9 +95,9 @@ struct SessionHistoryView: View {
                                 }) {
                                     WorkoutSessionRow(session: session)
                                         .padding()
-                                        .background(cardBackgroundColor)
+                                        .background(ThemeColor.cardBackgroundColor(colorScheme: colorScheme))
                                         .cornerRadius(12)
-                                        .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                                        .shadow(color: ThemeColor.shadowColor(colorScheme: colorScheme), radius: 4, x: 0, y: 2)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                                 .contextMenu {
@@ -115,7 +115,7 @@ struct SessionHistoryView: View {
             }
             .padding(.bottom, 16)
         }
-        .background(backgroundColor)
+        .background(ThemeColor.backgroundColor(colorScheme: colorScheme))
         .sheet(item: $selectedSession) { session in
             WorkoutSessionDetailView(session: session)
         }
@@ -126,35 +126,5 @@ struct SessionHistoryView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy년 M월 d일"
         return formatter
-    }
-    
-    // 배경색 - 다크 모드 대응
-    private var backgroundColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color(UIColor.systemBackground)
-        default:
-            return Color.gray.opacity(0.03)
-        }
-    }
-    
-    // 카드 배경색 - 다크 모드 대응
-    private var cardBackgroundColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color(UIColor.secondarySystemBackground)
-        default:
-            return Color.white
-        }
-    }
-    
-    // 그림자 색상 - 다크 모드 대응
-    private var shadowColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color.black.opacity(0.1)
-        default:
-            return Color.black.opacity(0.03)
-        }
     }
 }

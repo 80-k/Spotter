@@ -6,6 +6,10 @@ import Foundation
 import SwiftData
 import Combine
 
+// TODO: 이 구현체는 현재 앱에서 직접 사용되고 있지 않습니다.
+// 애플리케이션이 확장될 경우를 대비해 구현되었으며, 
+// 현재는 ViewModel에서 직접 SwiftData ModelContext를 사용하고 있습니다.
+
 /// 운동 관련 데이터 접근을 위한 리포지토리 구현
 final class WorkoutRepository: WorkoutRepositoryProtocol {
     private let modelContext: ModelContext

@@ -52,24 +52,6 @@ struct WorkoutSessionRow: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 2)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(cardBackgroundColor)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
-        )
-    }
-    
-    // 카드 배경색 - 다크 모드 대응
-    private var cardBackgroundColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color(UIColor.systemGray6)
-        default:
-            return Color.white
-        }
     }
     
     // 세션 지속 시간 포맷팅

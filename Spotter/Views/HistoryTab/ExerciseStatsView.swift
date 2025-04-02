@@ -61,9 +61,9 @@ struct ExerciseStatsView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .background(cardBackgroundColor)
+                .background(ThemeColor.cardBackgroundColor(colorScheme: colorScheme))
                 .cornerRadius(12)
-                .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                .shadow(color: ThemeColor.shadowColor(colorScheme: colorScheme), radius: 4, x: 0, y: 2)
                 .padding(.horizontal)
                 
                 // 가장 많이 한 운동 Top 5
@@ -86,9 +86,9 @@ struct ExerciseStatsView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .background(cardBackgroundColor)
+                .background(ThemeColor.cardBackgroundColor(colorScheme: colorScheme))
                 .cornerRadius(12)
-                .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                .shadow(color: ThemeColor.shadowColor(colorScheme: colorScheme), radius: 4, x: 0, y: 2)
                 .padding(.horizontal)
                 
                 // 운동 볼륨 추이
@@ -111,46 +111,16 @@ struct ExerciseStatsView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .background(cardBackgroundColor)
+                .background(ThemeColor.cardBackgroundColor(colorScheme: colorScheme))
                 .cornerRadius(12)
-                .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                .shadow(color: ThemeColor.shadowColor(colorScheme: colorScheme), radius: 4, x: 0, y: 2)
                 .padding(.horizontal)
             }
             .padding(.bottom, 16)
         }
-        .background(backgroundColor)
+        .background(ThemeColor.backgroundColor(colorScheme: colorScheme))
         .sheet(item: $selectedExercise) { exercise in
             ExerciseStatsDetailView(exercise: exercise, viewModel: viewModel)
-        }
-    }
-    
-    // 배경색 - 다크 모드 대응
-    private var backgroundColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color(UIColor.systemBackground)
-        default:
-            return Color.gray.opacity(0.03)
-        }
-    }
-    
-    // 카드 배경색 - 다크 모드 대응
-    private var cardBackgroundColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color(UIColor.secondarySystemBackground)
-        default:
-            return Color.white
-        }
-    }
-    
-    // 그림자 색상 - 다크 모드 대응
-    private var shadowColor: Color {
-        switch colorScheme {
-        case .dark:
-            return Color.black.opacity(0.1)
-        default:
-            return Color.black.opacity(0.03)
         }
     }
 }
@@ -161,7 +131,7 @@ struct MuscleGroupPieChartView: View {
     let timeRange: ExerciseStatsView.TimeRange
     
     var body: some View {
-        // 여기에 실제 차트 구현 (SwiftUI Charts 사용)
+        // TODO: 실제 차트 구현 필요 (SwiftUI Charts 사용)
         Text("부위별 운동 비율 차트가 표시됩니다")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.gray.opacity(0.1))
@@ -175,7 +145,7 @@ struct TopExercisesChartView: View {
     let timeRange: ExerciseStatsView.TimeRange
     
     var body: some View {
-        // 여기에 실제 차트 구현 (SwiftUI Charts 사용)
+        // TODO: 실제 차트 구현 필요 (SwiftUI Charts 사용)
         Text("가장 많이 한 운동 Top 5 차트가 표시됩니다")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.gray.opacity(0.1))
@@ -189,7 +159,7 @@ struct VolumeProgressChartView: View {
     let timeRange: ExerciseStatsView.TimeRange
     
     var body: some View {
-        // 여기에 실제 차트 구현 (SwiftUI Charts 사용)
+        // TODO: 실제 차트 구현 필요 (SwiftUI Charts 사용)
         Text("운동 볼륨 추이 차트가 표시됩니다")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.gray.opacity(0.1))
@@ -210,7 +180,7 @@ struct ExerciseStatsDetailView: View {
                     Text("\(exercise.name) 운동 통계")
                         .font(.headline)
                     
-                    // 여기에 운동별 상세 통계 추가
+                    // TODO: 운동별 상세 통계 구현 필요
                     Text("운동별 상세 통계가 표시됩니다")
                 }
                 .padding()

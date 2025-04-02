@@ -188,20 +188,13 @@ class ActiveWorkoutViewModel: WorkoutViewModelManageable {
     }
     
     // 세트 추가
-    @discardableResult
     func addSet(for exercise: ExerciseItem) -> WorkoutSet {
-        print("ViewModel: 세트 추가 시작 - 운동: \(exercise.name)")
-        
         let newSet = currentSession.createSet(for: exercise)
-        
-        print("ViewModel: currentSession workoutSets 개수: \(currentSession.workoutSets?.count ?? 0)")
         
         do {
             try modelContext.save()
-            print("ViewModel: modelContext 저장 성공")
         } catch {
-            print("ViewModel: 세트 추가 중 오류 발생: \(error)")
-            print("ViewModel: 오류 상세 - \(error.localizedDescription)")
+            print("세트 추가 중 오류 발생: \(error)")
         }
 
         return newSet
